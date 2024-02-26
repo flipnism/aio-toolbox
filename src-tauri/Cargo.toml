@@ -1,0 +1,52 @@
+[package]
+name = "aio-websockets-server-v2"
+version = "0.0.0"
+description = "AIO Server v2"
+authors = ["jmkl"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.5", features = [ "fs-write-file", "fs-read-file", "fs-read-dir", "path-all",
+    "window-close",
+    "window-unminimize",
+    "window-set-resizable",
+    "window-maximize",
+    "window-unmaximize",
+    "window-show",
+    "window-hide",
+    "window-set-skip-taskbar",
+    "window-minimize",
+    "window-start-dragging",
+    "shell-execute",
+    "shell-open",
+] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+image_search = { path = "D:/__CODE/RUSTUP/PROJECT/aio-websocket-server/image_search", features = [
+    "blocking",
+] }
+window-shadows = "0.2.2"
+tokio = { version = "1.36.0", features = ["full"] }
+futures-util = "0.3.30"
+tokio-stream = "0.1.14"
+strum_macros = "0.26.1"
+strum = "0.26.1"
+rand = "0.8.5"
+reqwest = "0.11.24"
+serde_urlencoded = "0.7.1"
+global-hotkey = "0.4.2"
+enigo = { git = "https://github.com/enigo-rs/enigo.git" }
+arboard = "3.3.1"
+tokio-tungstenite = "0.21.0"
+flume = "0.11.0"
+lazy_static = "1.4.0"
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
