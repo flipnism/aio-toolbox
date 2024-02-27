@@ -10,13 +10,17 @@
     "version": "0.0.0"
   },
   "tauri": {
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    },
     "allowlist": {
       "all": false,
       "fs": {
         "all": false,
         "copyFile": false,
         "createDir": false,
-        "exists": false,
+        "exists": true,
         "readDir": true,
         "readFile": true,
         "removeDir": false,
@@ -35,17 +39,14 @@
       },
       "window": {
         "all": false,
-
         "close": true,
         "hide": true,
         "show": true,
-        "setResizable": true,
-        "maximize": true,
-        "minimize": true,
-        "unmaximize": true,
-        "unminimize": true,
-        "setSkipTaskbar": true,
-        "startDragging": true
+        "setSize": true,
+        "setMinimizable": true,
+        "setSkipTaskbar": false,
+        "startDragging": true,
+        "setAlwaysOnTop": true
       }
     },
     "windows": [
@@ -55,7 +56,7 @@
         "height": 600,
         "decorations": false,
         "transparent": true,
-        "alwaysOnTop": true,
+        "alwaysOnTop": false,
         "fullscreen": false,
         "resizable": false,
         "closable": true

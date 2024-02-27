@@ -6,13 +6,33 @@ import {
   writeTextFile,
 } from "@tauri-apps/api/fs";
 
+type DataMacro = {
+  key: string;
+  down: boolean;
+};
+interface JsonMessage {
+  fromserver: boolean;
+  type: string; // TypeScript does not require renaming the "type" field
+  data: string;
+  channel?: string; // '?' denotes an optional field
+  image64?: string;
+  textdata?: string;
+}
+type MacroPadData = {
+  key: string;
+  data_mode: string;
+  data_macro: DataMacro[];
+  data: JsonMessage;
+  macro_title: string;
+};
+
 function generateConfig(config_file: string) {
-  const data = JSON.parse(localStorage.getItem("data"));
-  const data_flat = data.map((layer: { id: any; data: any[] }) => {
+  const data = JSON.parse(localStorage.getItem("data") || "[]");
+  const data_flat = data.map((layer: any) => {
     return {
       id: layer.id,
-      data: layer.data.map((row) => {
-        return row.map((keyData) => {
+      data: layer.data.map((row: MacroPadData[]) => {
+        return row.map((keyData: MacroPadData) => {
           if (keyData.data_mode == "action") {
             return {
               key: keyData.key,

@@ -11,16 +11,10 @@ edition = "2021"
 tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
-tauri = { version = "1.5", features = [ "fs-write-file", "fs-read-file", "fs-read-dir", "path-all",
+tauri = { version = "1.5", features = [ "fs-exists", "window-set-minimizable", "window-set-always-on-top", "system-tray", "window-set-size", "fs-write-file", "fs-read-file", "fs-read-dir", "path-all",
     "window-close",
-    "window-unminimize",
-    "window-set-resizable",
-    "window-maximize",
-    "window-unmaximize",
     "window-show",
     "window-hide",
-    "window-set-skip-taskbar",
-    "window-minimize",
     "window-start-dragging",
     "shell-execute",
     "shell-open",

@@ -1,19 +1,23 @@
+use crate::{
+    handle_message,
+    strct::{
+        DataMacro, JsonMessage, MPadPayload, MacroPadData, MacroPadDataMulti, ModPayload,
+        RegisteredKey,
+    },
+    APP_HANDLE, CLIENTS, PORT,
+};
+
+use crate::websocket::Message as MessageText;
 use enigo::{
     agent::{Agent, Token},
     Button, Enigo, Key, Settings,
 };
+use futures_util::StreamExt;
 use global_hotkey::{
     hotkey::{Code, HotKey, Modifiers},
     GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState,
 };
 use serde::ser;
-use tokio::sync::mpsc;
-
-use crate::{
-    strct::{DataMacro, MPadPayload, MacroPadData, MacroPadDataMulti, ModPayload, RegisteredKey},
-    PORT,
-};
-use futures_util::StreamExt;
 use serde_json::Value;
 use std::{
     collections::HashMap,
@@ -23,6 +27,7 @@ use std::{
 };
 use std::{sync::Arc, time::Instant};
 use tauri::{App, AppHandle, Manager};
+use tokio::sync::mpsc;
 
 #[derive(Debug, Clone)]
 pub struct MacroPadEvent {
@@ -34,6 +39,7 @@ pub struct MacroPadEvent {
     macropad_config: Vec<MacroPadDataMulti>,
     layer_index: u32,
     delay_time: u128,
+    mod_key: Code,
 }
 
 impl MacroPadEvent {
@@ -49,13 +55,14 @@ impl MacroPadEvent {
             macropad_config: Vec::new(),
             layer_index: 0,
             delay_time: 300,
+            mod_key: Code::End,
         })
     }
 
     pub fn read_config_file(&mut self, app: &App) {
         match app.path_resolver().app_data_dir() {
             Some(path) => {
-                let config_path = path.join("users").join("macropad_multi.json");
+                let config_path = path.join("users").join("macropad.json");
                 let setting_path = path.join("users").join("global_config_file.json");
                 if fs::metadata(&config_path).is_ok() {
                     let config_file =
@@ -103,7 +110,7 @@ impl MacroPadEvent {
             let curkey: RegisteredKey = RegisteredKey {
                 id: hkey.id(),
                 key: hotkey.to_string(),
-                mod_key: hotkey == Code::F24,
+                mod_key: hotkey == self.mod_key,
             };
             self.registered_keys.push(curkey);
             hotkeys_manager.register(hkey).unwrap();
@@ -203,7 +210,21 @@ impl MacroPadEvent {
         if !data.data_mode.is_empty() {
             match data.data_mode.as_str() {
                 "action" => {
-                    if let Some(msg) = &data.data {
+                    if let Some(message) = &data.data {
+                        let _ = APP_HANDLE
+                            .get()
+                            .unwrap()
+                            .emit_all("socket_message", &message);
+                        for client in CLIENTS.lock().unwrap().values() {
+                            match serde_json::to_string::<JsonMessage>(message) {
+                                Ok(msg) => {
+                                    client.send(MessageText::Text(msg.clone()));
+                                }
+                                Err(err) => {
+                                    println!("error sending to client :{}", err)
+                                }
+                            }
+                        }
 
                         // for (&_uid, tx) in GLOBAL_USER.get().unwrap().read().await.iter() {
                         //     let newmessage = serde_json::to_string(_jsonmessage).unwrap();

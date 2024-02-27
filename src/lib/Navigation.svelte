@@ -2,14 +2,26 @@
   import { onMount } from "svelte";
   import IconButton from "../components/IconButton.svelte";
   import { appWindow } from "@tauri-apps/api/window";
-  onMount(() => {});
+
+  export let page_state = 0;
+  let menus = ["Hotkeys", "Settings"];
+  function handleOnClick() {
+    page_state = (page_state + 1) % menus.length;
+  }
 </script>
 
-<div class="flex flex-row justify-between w-full items-center gap-2 px-2 py-1">
+<div
+  class="flex flex-row justify-between w-full items-center gap-2 px-2 py-1 select-none"
+>
   <div class="region_title">
-    <h1 class="font-black uppercase">Hotkeys</h1>
+    <button
+      tabindex="-1"
+      on:click={handleOnClick}
+      class="font-black uppercase select-none btn btn-xs"
+      >{menus[page_state]}</button
+    >
   </div>
-  <slot />
+  <slot name="title" />
   <div
     data-tauri-drag-region
     class="h-5 grow bg-base-200 rounded-lg cursor-grabbing"
@@ -29,3 +41,4 @@
     />
   </div>
 </div>
+<slot />
