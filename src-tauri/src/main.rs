@@ -44,7 +44,7 @@ lazy_static! {
     pub static ref CLIENTS: Mutex<HashMap<u64, Responder>> = Mutex::new(HashMap::new());
 }
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
-pub static PORT: u16 = 6969; // 7898
+pub static PORT: u16 = 7898; //;
 
 #[tauri::command]
 fn get_hotkey_config(
@@ -69,6 +69,14 @@ async fn execute_script(script_name: String) {
     };
 
     handle_message(script_model).await;
+}
+
+#[tauri::command]
+async fn ignore_cursor_events(app_handle: AppHandle, ignore: bool) -> Result<(), tauri::Error> {
+    app_handle
+        .get_window("main")
+        .unwrap()
+        .set_ignore_cursor_events(ignore)
 }
 
 #[tauri::command]
@@ -114,10 +122,16 @@ fn list_customscripts(app: AppHandle) -> Value {
     }
     json!(key_value_pairs)
 }
+#[tauri::command]
+async fn send_socket_message(message: JsonMessage) {
+    println!("message : {:?}", &message);
+    let _ = handle_message(message).await;
+}
 
 async fn handle_message(msg: JsonMessage) {
     let app_handle = APP_HANDLE.get().unwrap();
     let mut message = msg;
+    message.fromserver = true;
     let tamper_message = match message.data_type.as_str() {
         "clipboard" => {
             let mut clipboard = Clipboard::new().unwrap();
@@ -138,7 +152,8 @@ async fn handle_message(msg: JsonMessage) {
             message
         }
         "createemblem" => {
-            let new_emblem = create_emblem(message.data.as_str(), app_handle).await;
+            let data = message.data.replace("\'", "\\\'").replace("\"", "\\\"");
+            let new_emblem = create_emblem(data.as_str(), app_handle).await;
             message.data = new_emblem;
             message
         }
@@ -166,6 +181,7 @@ async fn handle_message(msg: JsonMessage) {
             }
             message
         }
+
         _ => message,
     };
     let _ = app_handle.emit_all("socket_message", &tamper_message);
@@ -182,20 +198,27 @@ async fn handle_message(msg: JsonMessage) {
 }
 
 pub fn launch_settings_window(app: &tauri::AppHandle) {
-    if app.get_window("settings").is_none() {
-        let window = tauri::WindowBuilder::new(
-            app,
-            "settings",
-            tauri::WindowUrl::App("settings.html".into()),
-        )
-        .title("Settings!")
-        .decorations(false)
-        .inner_size(600.0, 400.0)
-        .maximizable(false)
-        .skip_taskbar(true)
-        .build()
-        .unwrap();
-        set_shadow(&window, true).unwrap();
+    match app.get_window("settings") {
+        Some(window) => {
+            let _ = window.unminimize();
+            let _ = window.set_focus();
+        }
+        None => {
+            let window = tauri::WindowBuilder::new(
+                app,
+                "settings",
+                tauri::WindowUrl::App("settings.html".into()),
+            )
+            .title("Settings!")
+            .decorations(false)
+            .inner_size(600.0, 400.0)
+            .maximizable(false)
+            .skip_taskbar(true)
+            .build()
+            .unwrap();
+
+            set_shadow(&window, true).unwrap();
+        }
     }
 }
 
@@ -330,7 +353,9 @@ async fn main() {
             run_command,
             get_hotkey_config,
             list_customscripts,
-            execute_script
+            execute_script,
+            ignore_cursor_events,
+            send_socket_message
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

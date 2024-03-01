@@ -108,6 +108,7 @@
   </div>
   <div class="flex flex-col">
     {#if show_tooltip}
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
       <divs
         transition:fade={{ duration: 100 }}
         on:mouseleave={reset}
@@ -153,8 +154,9 @@
                   active_btn_data();
                 }}
                 class="btn btn-xs btn-outline font-bold uppercase rounded-sm"
-                >{action}</button
               >
+                {action}
+              </button>
             {/each}
           </div>
         </div>
@@ -164,7 +166,7 @@
         class="flex flex-col absolute bg-base-300 z-10 w-full h-[calc(100%-2rem)] p-4"
       />
       <div class="h-full">
-        <div class="grid grid-cols-4 gap-4 px-10">
+        <div class="grid grid-cols-4 gap-1 px-4">
           {#if macropad_data.length > 0}
             {#each macropad_data[page_layer_index].data as macropads, index}
               {#each macropads as mpads, idx}
@@ -199,12 +201,13 @@
                           class="{mpads?.data_mode == 'macro'
                             ? 'text-error'
                             : ''} text-xs font-bold italic"
-                          >{mpads?.data_mode || ""}</span
                         >
+                          {mpads?.data_mode || ""}
+                        </span>
                         {#if mpads?.data_mode == "macro"}
-                          <span class="text-xs line-clamp-1"
-                            >{mpads?.macro_title}</span
-                          >
+                          <span class="text-xs line-clamp-1">
+                            {mpads?.macro_title}
+                          </span>
                         {/if}
                       </div>
                     </div>

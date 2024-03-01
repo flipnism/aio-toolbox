@@ -1,25 +1,53 @@
-<script>
+<script lang="ts">
   import { onMount } from "svelte";
   import IconButton from "../components/IconButton.svelte";
   import { appWindow } from "@tauri-apps/api/window";
+  import { fade, slide } from "svelte/transition";
+  import {
+    backIn,
+    backOut,
+    bounceIn,
+    quadOut,
+    quintInOut,
+  } from "svelte/easing";
 
-  export let page_state = 0;
-  let menus = ["Hotkeys", "Settings"];
-  function handleOnClick() {
-    page_state = (page_state + 1) % menus.length;
+  export let page_state = 2;
+  let menus = ["Hotkeys", "Settings", "TodoList"];
+  function handleOnClick(text: string) {
+    page_state = menus.findIndex((m) => m == text); //(page_state + 1) % menus.length;
   }
+  let show_menu = false;
 </script>
 
 <div
   class="flex flex-row justify-between w-full items-center gap-2 px-2 py-1 select-none"
 >
-  <div class="region_title">
-    <button
-      tabindex="-1"
-      on:click={handleOnClick}
-      class="font-black uppercase select-none btn btn-xs"
-      >{menus[page_state]}</button
-    >
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div
+    on:mouseenter={() => (show_menu = true)}
+    on:mouseleave={() => (show_menu = false)}
+    class="region_title flex"
+  >
+    <div class="font-black uppercase select-none px-2">
+      {menus[page_state]}
+    </div>
+    {#if show_menu}
+      <div
+        in:slide={{ axis: "x", duration: 300, easing: backIn }}
+        out:slide={{ axis: "x", duration: 300, delay: 300, easing: backOut }}
+        class="flex flex-row"
+      >
+        {#each menus.filter((m) => m != menus[page_state]) as menu, i}
+          <button
+            tabindex="-1"
+            on:click={() => handleOnClick(menu)}
+            class="font-black uppercase select-none btn btn-xs btn-ghost"
+          >
+            {menu}
+          </button>
+        {/each}
+      </div>
+    {/if}
   </div>
   <slot name="title" />
   <div

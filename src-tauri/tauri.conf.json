@@ -43,10 +43,12 @@
         "hide": true,
         "show": true,
         "setSize": true,
+        "minimize": true,
         "setMinimizable": true,
         "setSkipTaskbar": false,
         "startDragging": true,
-        "setAlwaysOnTop": true
+        "setAlwaysOnTop": true,
+        "setPosition": true
       }
     },
     "windows": [

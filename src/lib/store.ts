@@ -22,6 +22,7 @@ export function writable<T>(value: T) {
 
 export const layer_index = writable(0);
 export const tags = writable([]);
+export const global_settings = writable([]);
 
 export const color_set = [
   ["#c1111f", "#fff"],

@@ -55,7 +55,7 @@ impl MacroPadEvent {
             macropad_config: Vec::new(),
             layer_index: 0,
             delay_time: 300,
-            mod_key: Code::End,
+            mod_key: Code::F24,
         })
     }
 
@@ -91,19 +91,33 @@ impl MacroPadEvent {
 
     pub fn register(&mut self) -> GlobalHotKeyManager {
         let hotkeys_manager = GlobalHotKeyManager::new().unwrap();
+        // let hotkey_rows = vec![
+        //     Code::Numpad1,
+        //     Code::Numpad2,
+        //     Code::Numpad3,
+        //     Code::Numpad4,
+        //     Code::Numpad5,
+        //     Code::Numpad6,
+        //     Code::Numpad7,
+        //     Code::Numpad8,
+        //     Code::Numpad9,
+        //     Code::Numpad0,
+        //     Code::Insert,
+        //     Code::End,
+        // ];
         let hotkey_rows = vec![
-            Code::Numpad1, //Code::F13,
-            Code::Numpad2, //Code::F14,
-            Code::Numpad3, //Code::F15,
-            Code::Numpad4, //Code::F16,
-            Code::Numpad5, //Code::F17,
-            Code::Numpad6, //Code::F18,
-            Code::Numpad7, //Code::F19,
-            Code::Numpad8, //Code::F20,
-            Code::Numpad9, //Code::F21,
-            Code::Numpad0, //Code::F22,
-            Code::Insert,  //Code::F23,
-            Code::End,     //Code::F24,
+            Code::F13,
+            Code::F14,
+            Code::F15,
+            Code::F16,
+            Code::F17,
+            Code::F18,
+            Code::F19,
+            Code::F20,
+            Code::F21,
+            Code::F22,
+            Code::F23,
+            Code::F24,
         ];
         for hotkey in hotkey_rows {
             let hkey = HotKey::new(Some(Modifiers::empty()), hotkey);
