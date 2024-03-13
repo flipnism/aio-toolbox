@@ -1,7 +1,7 @@
 use crate::{
     handle_message,
     strct::{
-        DataMacro, JsonMessage, MPadPayload, MacroPadData, MacroPadDataMulti, ModPayload,
+        DataMacro, JsonMessage, MPadPayload, MacroPadData, MacroPadDataMulti, ModKey, ModPayload,
         RegisteredKey,
     },
     APP_HANDLE, CLIENTS, PORT,
@@ -40,6 +40,7 @@ pub struct MacroPadEvent {
     layer_index: u32,
     delay_time: u128,
     mod_key: Code,
+    hold_time: u128,
 }
 
 impl MacroPadEvent {
@@ -55,11 +56,26 @@ impl MacroPadEvent {
             macropad_config: Vec::new(),
             layer_index: 0,
             delay_time: 300,
+            hold_time: 500,
             mod_key: Code::F24,
         })
     }
-
-    pub fn read_config_file(&mut self, app: &App) {
+    pub fn update_config_file(&mut self, app: &AppHandle) {
+        match app.path_resolver().app_data_dir() {
+            Some(path) => {
+                let config_path = path.join("users").join("macropad.json");
+                let config_file = File::open(&config_path.to_string_lossy().to_string()).unwrap();
+                self.macropad_config = serde_json::from_reader(config_file).expect("cant read");
+                println!("config file updated");
+                let payload = ModKey { is_pressed: false };
+                let _ = app.emit_all("config-updated", &payload);
+            }
+            None => {
+                println!("failed to update config");
+            }
+        }
+    }
+    pub fn read_config_file(&mut self, app: &AppHandle) {
         match app.path_resolver().app_data_dir() {
             Some(path) => {
                 let config_path = path.join("users").join("macropad.json");
@@ -144,6 +160,7 @@ impl MacroPadEvent {
                     let stime = Instant::now();
                     self.delay = (stime - self.last_press).as_millis();
                     self.mod_hold = self.delay > self.delay_time;
+                    self.hold_time = self.delay;
                 }
                 self.on_mod_pressed(&handle);
                 self.delay = self.delay.min(self.delay_time);
@@ -255,7 +272,9 @@ impl MacroPadEvent {
                     }
                 }
                 "macro" => match &data.data_macro {
-                    Some(data) => self.processing_macro(&data),
+                    Some(data) => {
+                        self.processing_macro(&data);
+                    }
                     None => {}
                 },
                 _ => {}
@@ -287,6 +306,10 @@ impl MacroPadEvent {
                     layer_index: &self.layer_index,
                 },
             );
+            if self.hold_time > 3000 {
+                self.update_config_file(handle);
+                self.hold_time = 0;
+            }
         }
         if self.mod_pressed && !self.mod_hold {
             self.layer_index = (self.layer_index + 1) % 3;
@@ -296,8 +319,11 @@ impl MacroPadEvent {
                     layer_index: &self.layer_index,
                 },
             );
+            //println!("how long {}", self.hold_time);
         }
+
         if self.mod_pressed && self.mod_hold {
+
             //println!("press on hold");
         }
     }

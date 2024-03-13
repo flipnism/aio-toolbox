@@ -1,195 +1,314 @@
-<script lang="ts">
+<script>
+  import { invoke } from "@tauri-apps/api";
   import "./styles.css";
-  import { invoke, tauri } from "@tauri-apps/api";
-  import { onDestroy, onMount } from "svelte";
-  import IconButton from "./components/IconButton.svelte";
-  import {
-    LogicalPosition,
-    LogicalSize,
-    PhysicalPosition,
-    appWindow,
-  } from "@tauri-apps/api/window";
-  import { fade, slide } from "svelte/transition";
-  import { quartInOut } from "svelte/easing";
   import { listen } from "@tauri-apps/api/event";
-  import { layer_index, color_set, global_settings } from "./lib/store";
+  import { BaseDirectory, readTextFile } from "@tauri-apps/api/fs";
+  import { onMount } from "svelte";
+  import { LogicalSize, appWindow } from "@tauri-apps/api/window";
+  import CSButton from "./components/CSButton.svelte";
+  let keys = null;
+  let mod_pressed = { pressed: false, milisecond: 0 };
+  let configs = null;
+  let filtered_config = null;
+  let progressId;
+  let delayIdle;
+  let opacity = 1;
+  let progress = 0;
+  let customScripts = [];
+  let app_configs = {
+    click_throught: false,
+    always_on_top: false,
+    hold_delay: 300,
+    reset_delay: 5000,
+  };
+  const doIdle = () => {
+    opacity = 0;
+    clearTimeout(delayIdle);
+  };
+  const dontIdle = () => {
+    opacity = 1;
+    clearTimeout(delayIdle);
+    delayIdle = setTimeout(() => {
+      doIdle();
+    }, app_configs.reset_delay + 3000);
+  };
+  listen("modkey_event", (result) => {
+    dontIdle();
+    keys = result.payload;
 
-  import type { GlobalSetting } from "./global";
-  let ontop = false;
-  let customScripts: any = [];
-  let tooltip_text = "";
-  let is_loading = false;
-  let page_layer_index = 0;
-  let btn_scripts_width = 100;
-  let gap = 0;
-  layer_index.subscribe((value: any) => (page_layer_index = value));
-  function setWindowSize() {
-    const l = customScripts.length;
-    const iconsize = 22 * l;
-    gap = 8 * (l - 1);
-    btn_scripts_width = iconsize;
-    appWindow.setSize(new LogicalSize(btn_scripts_width + gap + 40, 40));
+    if (keys.config_updated) {
+      location.reload();
+    }
+    if (keys.reset) {
+      keys = { ...keys, mod_pressed: false };
+
+      doFilter(configs);
+      return;
+    }
+    if (!keys.multikey && !keys.mod_pressed) {
+      doFilter(configs);
+      return;
+    }
+
+    if (
+      keys.multikey &&
+      keys.mod_pressed &&
+      keys.key_1 == "" &&
+      keys.key_2 == ""
+    ) {
+      let key_map = keys.multikey_map.map((item) => {
+        return {
+          key_name: item,
+          key_desc: "",
+          key_mode: "",
+          key_multikey: false,
+          key_1: "",
+          key_2: "",
+        };
+      });
+      filtered_config = pads.map((padKey) => {
+        const matchingData = key_map.find((item) => item.key_name == padKey);
+        return matchingData ? matchingData : null;
+      });
+      return;
+    }
+
+    if (keys.key_1) {
+      invoke("filter_keys", { key: keys.key_1 }).then((result) => {
+        if (keys.reset) {
+          keys = {
+            reset: true,
+            mod_pressed: false,
+            key_1: "",
+            key_2: "",
+          };
+          return;
+        }
+        filtered_config = pads.map((padKey) => {
+          const matchingData = result.find((item) => item.key_2 == padKey);
+          return matchingData ? matchingData : null;
+        });
+
+        return;
+      });
+    } else {
+      filtered_config = [];
+    }
+    if (keys.mod_pressed) return;
+
+    doFilter(configs);
+  });
+  function processProgress() {
+    progress += 5;
   }
+  listen("mod_pressed", (r) => {
+    mod_pressed = r.payload;
+    if (mod_pressed.pressed) {
+      progressId = setInterval(processProgress, 5);
+    } else {
+      clearInterval(progressId);
+      progress = 0;
+    }
+  });
   onMount(() => {
+    invoke("script_lists").then((result) => {
+      console.log(result);
+    });
     invoke("list_customscripts").then((result) => {
       customScripts = result;
-      setWindowSize();
     });
+    readTextFile("app_config.json", { dir: BaseDirectory.AppData }).then(
+      (result) => {
+        app_configs = JSON.parse(result);
+        console.log(app_configs);
+      }
+    );
+    readTextFile("config.json", { dir: BaseDirectory.AppData }).then(
+      (result) => {
+        configs = JSON.parse(result);
+        keys = {
+          reset: true,
+          mod_pressed: false,
+          key_1: "",
+          key_2: "",
+        };
+        doFilter(configs);
+      }
+    );
+    appWindow.setSize(new LogicalSize(400, 150));
   });
+  let current_desc = "";
+  let pads = [
+    "F13",
+    "F14",
+    "F15",
+    "F16",
+    "F17",
+    "F18",
+    "F19",
+    "F20",
+    "F21",
+    "F22",
+    "F23",
+    "F24",
+  ];
+  function doFilter(config) {
+    const filt = config.filter((e) => !e.key_multikey == !keys.mod_pressed);
+    filtered_config = pads.map((padKey) => {
+      const matchingData = filt.find((item) => item.key_1 == padKey);
 
-  function clickThrought(ignore: boolean) {
-    invoke("ignore_cursor_events", { ignore: ignore }).then((result) => {
-      console.log("result");
+      return matchingData ? matchingData : null;
     });
   }
 
-  function handleScriptOnClick(script: any) {
+  /**
+   * Description
+   * @param {any} k
+   * @returns {any}
+   */
+  function key(k) {
+    return `Combo: ${k.key_1}${k.key_2 != "" ? "-" + k.key_2 : " _"}`;
+  }
+
+  function whichkey(key) {
+    let is_result = false;
+    if (keys.multikey) {
+      is_result = keys.key_2 == key;
+    } else {
+      is_result = keys.key_1 == key;
+    }
+
+    return is_result;
+  }
+  function handleScriptOnClick(script) {
     invoke("execute_script", { scriptName: script[1].name });
-  }
-  let show_script_buttons = false;
-  let hideTimerId: number;
-  let mouse_down = false;
-  let last_position = {
-    x: 100,
-    y: 100,
-  };
-
-  $: appWindow.setAlwaysOnTop(ontop);
-
-  let mouseDown = false;
-  let setting_listener: any;
-  onMount(async () => {
-    setting_listener = await listen<any>("setting-update", (event) => {
-      console.log(event.payload);
-    });
-  });
-
-  const debounce = <T extends (...args: any[]) => void>(fn: T, ms = 0) => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => fn.apply(this, args), ms);
-    };
-  };
-
-  // Your original mouseleave logic
-  const handleMouseLeave = () => {
-    tooltip_text = "";
-    show_script_buttons = false;
-    appWindow.setSize(new LogicalSize(58, 40));
-  };
-  let delayedMouseLeave: any;
-  const handleMouseEnter = () => {
-    console.log("mouseenter");
-    show_script_buttons = true;
-    appWindow.setSize(new LogicalSize(btn_scripts_width + gap + 40, 40));
-
-    clearTimeout(delayedMouseLeave);
-  };
-  onMount(() => {
-    delayedMouseLeave = debounce(handleMouseLeave, 500);
-  });
-  function check(e) {
-    console.log(e.type);
   }
 </script>
 
-<!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class="flex flex-col overflow-hidden select-none">
-  <div class="flex align-middle overflow-hidden rounded-sm relative">
-    {#if is_loading}
-      <div
-        style="background:{color_set[0][0]};"
-        transition:slide={{ axis: "x", duration: 200, easing: quartInOut }}
-        data-tauri-drag-region
-        class="flex rounded-md cursor-grabbing h-full absolute top-0 left-0 w-full justify-center items-center"
-      >
-        <span class="loading loading-dots loading-xs"></span>
-      </div>
-    {/if}
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
+<!-- svelte-ignore avoid-mouse-events-on-document -->
+<svelte:document on:mouseenter={dontIdle} />
+<div style="opacity: {opacity};" class="transition-all bg-base-300/90">
+  <div
+    class="absolute top-0 left-0 pointer-events-none overflow-hidden h-full w-full z-50"
+  >
     <div
-      style="background:{color_set[page_layer_index][0]};color:{color_set[
-        page_layer_index
-      ][1]}"
-      class="flex max-w-8 w-full h-[26px]"
-    >
+      style="width:{progress * 1}px;height:{progress * 1}px;opacity:{progress /
+        5 /
+        100};"
+      class="{progress >= app_configs.hold_delay
+        ? progress >= app_configs.reset_delay
+          ? 'bg-error transition-all'
+          : 'bg-success'
+        : 'bg-white'}  w-10 h-10 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 relative"
+    ></div>
+  </div>
+  <div class="flex">
+    {#each customScripts as script, i}
+      <CSButton
+        on:mouseenter={() => {
+          tooltip_text = script[1].desc;
+          handleMouseEnter();
+        }}
+        on:click={() => handleScriptOnClick(script)}
+        icon="path"
+        path={script[1].icon_path}
+      />
+    {/each}
+  </div>
+  <div class="flex overflow-hidden flex-col select-none h-screen w-screen">
+    <div class="flex items-center">
+      {#if keys}
+        {#if keys.mod_pressed}
+          <div class="text-[.7rem] font-black p-[5px]">
+            {key(keys)}
+          </div>
+        {:else}
+          <div class="text-[.7rem] p-[5px] font-black">
+            Key: {keys.key_1 || "_"}
+          </div>
+        {/if}
+      {/if}
       <div
         data-tauri-drag-region
-        class="text-2xl h-full bg-base-300/30 select-none w-[8px] justify-center flex-1 leading-[20px] font-extralight align-middle text-center cursor-grabbing"
+        class="h-4/6 flex-1 cursor-grabbing hover:bg-base-100/20 active:bg-base-100/20 rounded-lg"
+      ></div>
+      <div
+        class="font-light text-base-content/50 line-clamp-1 px-2 text-[.6rem]"
       >
-        {page_layer_index + 1}
+        {current_desc}
       </div>
     </div>
-    <div
-      on:mouseleave={delayedMouseLeave}
-      on:mouseenter={handleMouseEnter}
-      class="flex flex-row"
-    >
-      <div
-        style="background:{color_set[page_layer_index][0]};color:{color_set[
-          page_layer_index
-        ][1]}"
-        class="hello_"
-      >
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div
-          on:mouseenter={() => {}}
-          class="min-h-full justify-center items-center flex scale-75 h-full"
-        >
-          <input
-            bind:checked={ontop}
-            type="checkbox"
-            class="toggle toggle-xs bg-transparent"
-          />
-        </div>
-      </div>
-      {#if show_script_buttons}
-        <div
-          in:slide={{
-            delay: 100,
-            duration: 200,
-            axis: "x",
-            easing: quartInOut,
-          }}
-          out:slide={{
-            duration: 100,
-            axis: "x",
-            easing: quartInOut,
-          }}
-          style="background:{color_set[page_layer_index][0]};color:{color_set[
-            page_layer_index
-          ][1]}"
-          class="flex flex-row gap-1 transition-all"
-        >
-          {#each customScripts as script, i}
-            <IconButton
-              on:mouseover={() => {
-                tooltip_text = script[1].desc;
+
+    {#if filtered_config && filtered_config.filter((e) => e != null).length > 0}
+      {#key filtered_config}
+        <div class="grid grid-cols-4 overflow-hidden">
+          {#each filtered_config as key, i}
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+
+            <div
+              on:mouseenter={() => {
+                if (key) current_desc = key.key_desc;
               }}
-              on:click={() => handleScriptOnClick(script)}
-              icon="path"
-              path={script[1].icon_path}
-            />
+              on:mouseleave={() => {
+                current_desc = "";
+              }}
+              class="border min-h-10 {key != null && key.key_multikey
+                ? 'bg-success/5 border-white/5'
+                : whichkey(pads[i])
+                  ? 'border-warning border-2'
+                  : 'border-white/5'} text-xs p-1"
+            >
+              {#if key}
+                <div
+                  class="flex w-full text-[.7rem] uppercase {key.key_mode != ''
+                    ? ''
+                    : 'bg-success/20'}"
+                >
+                  <div
+                    class="font-black {key.key_mode != ''
+                      ? ''
+                      : 'text-xl text-center self-center w-full'}"
+                  >
+                    {key.key_name}
+                  </div>
+                  <div class="font-extralight text-base-content/50"></div>
+                  <div class="flex-1"></div>
+                  {#if key.key_mode != ""}
+                    <div
+                      class="font-black italic {key.key_mode == 'Action'
+                        ? 'bg-success'
+                        : 'bg-error'} rounded-full w-4 h-4 text-center text-base-300"
+                    >
+                      {key.key_mode.slice(0, 1)}
+                    </div>
+                  {/if}
+                </div>
+                <div class="font-light line-clamp-1 text-[.5rem]">
+                  {key.key_mode != "" ? pads[i] : ""}
+                </div>
+              {/if}
+            </div>
           {/each}
         </div>
-      {/if}
-    </div>
+      {/key}
+    {:else}
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div
+        on:mouseenter={() => {
+          current_desc = "";
+        }}
+        class="flex text-center h-screen w-screen justify-center items-center text-4xl text-white/10 absolute"
+      >
+        None
+      </div>
+    {/if}
   </div>
-  {#if tooltip_text !== ""}
-    <div
-      transition:fade={{ duration: 100 }}
-      class="text-[10px] self-end justify-end bg-base-300/50 rounded-lg px-2 text-white w-fit"
-    >
-      {tooltip_text}
-    </div>
-  {/if}
 </div>
 
 <style>
   :global(html),
   :global(:root) {
+    font-family: "JetBrains Mono";
     background: transparent !important;
   }
 </style>

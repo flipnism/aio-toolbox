@@ -91,6 +91,7 @@ dependencies = [
  "global-hotkey",
  "image_search",
  "lazy_static",
+ "macropad",
  "rand 0.8.5",
  "reqwest",
  "serde",
@@ -388,6 +389,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
+name = "bincode"
+version = "1.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -576,7 +586,7 @@ checksum = "d38f2da7a0a2c4ccf0065be06397cc26a81f4e528be095826eee9d4adbb8c60f"
 dependencies = [
  "byteorder",
  "fnv",
- "uuid",
+ "uuid 1.7.0",
 ]
 
 [[package]]
@@ -1121,6 +1131,18 @@ name = "error-code"
 version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "281e452d3bad4005426416cdba5ccfd4f5c1280e10099e21db27f7c1c28347fc"
+
+[[package]]
+name = "event-emitter-rs"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7dccdd0a59457ba353cc44c26d431ca5089f2cf93035c780a1b3f2814a017ebd"
+dependencies = [
+ "bincode",
+ "lazy_static",
+ "serde",
+ "uuid 0.8.2",
+]
 
 [[package]]
 name = "event-listener"
@@ -1689,9 +1711,9 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "global-hotkey"
-version = "0.4.2"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "927a00fd7c31d82029f99ce2481a8de1ae974758017d6a55ebbe7f22edcd1617"
+checksum = "5b0d37e95d3937251ee2019709389bb793c1237f16d45fc0fe7b2464b5f97c68"
 dependencies = [
  "crossbeam-channel",
  "keyboard-types",
@@ -2499,6 +2521,17 @@ name = "mac"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
+
+[[package]]
+name = "macropad"
+version = "0.1.0"
+dependencies = [
+ "enigo",
+ "event-emitter-rs",
+ "global-hotkey",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "malloc_buf"
@@ -4269,7 +4302,7 @@ dependencies = [
  "serde",
  "tao-macros",
  "unicode-segmentation",
- "uuid",
+ "uuid 1.7.0",
  "windows 0.39.0",
  "windows-implement",
  "x11-dl",
@@ -4347,7 +4380,7 @@ dependencies = [
  "thiserror",
  "tokio 1.36.0",
  "url",
- "uuid",
+ "uuid 1.7.0",
  "webkit2gtk",
  "webview2-com",
  "windows 0.39.0",
@@ -4394,7 +4427,7 @@ dependencies = [
  "tauri-utils",
  "thiserror",
  "time 0.3.34",
- "uuid",
+ "uuid 1.7.0",
  "walkdir",
 ]
 
@@ -4428,7 +4461,7 @@ dependencies = [
  "tauri-utils",
  "thiserror",
  "url",
- "uuid",
+ "uuid 1.7.0",
  "webview2-com",
  "windows 0.39.0",
 ]
@@ -4446,7 +4479,7 @@ dependencies = [
  "raw-window-handle",
  "tauri-runtime",
  "tauri-utils",
- "uuid",
+ "uuid 1.7.0",
  "webkit2gtk",
  "webview2-com",
  "windows 0.39.0",
@@ -5014,6 +5047,15 @@ name = "utf-8"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
+
+[[package]]
+name = "uuid"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
+dependencies = [
+ "getrandom 0.2.12",
+]
 
 [[package]]
 name = "uuid"

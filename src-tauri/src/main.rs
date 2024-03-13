@@ -2,7 +2,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod client;
-mod macropad;
 mod settings;
 mod strct;
 mod utils;
@@ -15,7 +14,11 @@ use client::{
     write_thumbnail,
 };
 use global_hotkey::GlobalHotKeyEvent;
-use macropad::MacroPadEvent;
+use macropad::config::{
+    read_action_lists, read_app_config, read_macropad_config, read_script_lists, write_app_config,
+};
+use macropad::model::MacropadData;
+use macropad::{Event, MacropPad};
 use reqwest::{self, Url};
 use serde_json::{json, Value};
 use settings::{get_setting_for, read_hotkeys};
@@ -28,6 +31,7 @@ use std::process::{Command, Stdio};
 use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 use strct::{CommandArgs, JsonMessage, LoggingPayload, MacroPadDataMulti};
+use tauri::api::process::restart;
 use websocket::{
     Event::Connect, Event::Disconnect, Event::Message, Message as MessageText, Responder,
 };
@@ -35,15 +39,16 @@ use window_shadows::set_shadow;
 
 use lazy_static::lazy_static;
 use std::fs::{self, File};
-use tauri::AppHandle;
 use tauri::Manager;
 use tauri::SystemTray;
 use tauri::SystemTrayEvent;
+use tauri::{App, AppHandle};
 use tauri::{CustomMenuItem, SystemTrayMenu, SystemTrayMenuItem};
 lazy_static! {
     pub static ref CLIENTS: Mutex<HashMap<u64, Responder>> = Mutex::new(HashMap::new());
 }
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
+
 pub static PORT: u16 = 7898; //;
 
 #[tauri::command]
@@ -55,6 +60,12 @@ fn get_hotkey_config(
         Ok(result) => Ok(result),
         Err(err) => Err(format!("failed {}", err)),
     }
+}
+
+#[tauri::command]
+fn update_config(app: AppHandle, cloned: tauri::State<Mutex<MacropPad>>) {
+    //cloned.lock().unwrap().update_config_file(&app);
+    //restart(&app.env())
 }
 
 #[tauri::command]
@@ -126,6 +137,44 @@ fn list_customscripts(app: AppHandle) -> Value {
 async fn send_socket_message(message: JsonMessage) {
     println!("message : {:?}", &message);
     let _ = handle_message(message).await;
+}
+
+#[tauri::command]
+fn action_lists() -> Vec<String> {
+    let appdir = APP_HANDLE
+        .get()
+        .unwrap()
+        .path_resolver()
+        .app_data_dir()
+        .unwrap();
+    read_action_lists(&appdir)
+}
+#[tauri::command]
+fn script_lists() -> Vec<String> {
+    let appdir = APP_HANDLE
+        .get()
+        .unwrap()
+        .path_resolver()
+        .app_data_dir()
+        .unwrap();
+    read_script_lists(&appdir)
+}
+#[tauri::command]
+fn filter_keys(key: &str) -> Vec<MacropadData> {
+    let appdir = APP_HANDLE
+        .get()
+        .unwrap()
+        .path_resolver()
+        .app_data_dir()
+        .unwrap();
+    match read_macropad_config(&appdir) {
+        Ok(alldata) => alldata
+            .into_iter()
+            .filter(|data| data.key_1 == Some(key.to_string()))
+            .filter(|data| data.key_2 != Some("".into()))
+            .collect(),
+        Err(_) => Vec::new(),
+    }
 }
 
 async fn handle_message(msg: JsonMessage) {
@@ -211,6 +260,7 @@ pub fn launch_settings_window(app: &tauri::AppHandle) {
             )
             .title("Settings!")
             .decorations(false)
+            .disable_file_drop_handler()
             .inner_size(600.0, 400.0)
             .maximizable(false)
             .skip_taskbar(true)
@@ -239,11 +289,14 @@ pub fn launch_preview_window(app: &tauri::AppHandle) {
 fn setting_up_tray() -> SystemTray {
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let settings = CustomMenuItem::new("settings".to_string(), "Settings");
+    let clicktru = CustomMenuItem::new("clicktru".to_string(), "Click through");
+
     let restart = CustomMenuItem::new("restart".to_string(), "Restart");
     let hotkeypreview = CustomMenuItem::new("hotkeypreview".to_string(), "Hotkey Preview!");
     let tray_menu = SystemTrayMenu::new()
         .add_item(settings)
         .add_item(hotkeypreview)
+        .add_item(clicktru)
         .add_item(restart)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
@@ -253,14 +306,18 @@ fn setting_up_tray() -> SystemTray {
 #[tokio::main]
 async fn main() {
     let system_tray = setting_up_tray();
-    let mut mpad = MacroPadEvent::new().await.expect("msg");
-    let _hotkeys_manager = mpad.register();
+    let mut mpad = MacropPad::new().expect("msg");
+
+    let _hotkeys_manager = &mpad.register();
     let global_hotkey_channel = GlobalHotKeyEvent::receiver();
     tauri::Builder::default()
         .setup(move |app| {
             let ws = websocket::launch(PORT).expect("failed to launch websocket");
-            let _ = &mpad.read_config_file(&app);
+
             APP_HANDLE.set(app.app_handle().clone()).unwrap();
+            let _ = &mpad
+                .update_macropad_configs(app.app_handle().path_resolver().app_data_dir().unwrap());
+
             tauri::async_runtime::spawn(async move {
                 loop {
                     match ws.poll_event() {
@@ -295,9 +352,17 @@ async fn main() {
                 }
             });
             tauri::async_runtime::spawn(async move {
+                let _ = &mpad.event_emitter.on("event", |v: Event| match v {
+                    Event::PayloadEvent(c, pp) => {
+                        let _ = APP_HANDLE.get().unwrap().emit_all(c.as_str(), pp);
+                    }
+                    Event::ModEvent(c, pp) => {
+                        let _ = APP_HANDLE.get().unwrap().emit_all(c.as_str(), pp);
+                    }
+                });
                 loop {
                     if let Ok(event) = global_hotkey_channel.try_recv() {
-                        let _ = &mpad.find_key(&event, &APP_HANDLE.get().unwrap()).await;
+                        let _ = &mpad.process_key(&event);
                     }
                     std::thread::sleep(Duration::from_millis(100));
                 }
@@ -315,9 +380,28 @@ async fn main() {
                 "settings" => {
                     launch_settings_window(app);
                 }
+                "clicktru" => match app.get_window("main") {
+                    Some(window) => {
+                        let appdir = APP_HANDLE
+                            .get()
+                            .unwrap()
+                            .path_resolver()
+                            .app_data_dir()
+                            .unwrap();
+                        let mut config = read_app_config(&appdir).unwrap();
+                        config.click_throught = !config.click_throught;
+                        let _ = write_app_config(&appdir, config.clone());
+                        let item_handle = app.tray_handle().get_item(&id);
+                        let _ = item_handle
+                            .set_title(format!("Click throught : {}", &config.click_throught))
+                            .unwrap();
+                        let _ = window.set_ignore_cursor_events(config.click_throught);
+                    }
+                    None => println!("not found window"),
+                },
 
                 "hotkeypreview" => {
-                    launch_preview_window(app);
+                    //launch_preview_window(app);
                 }
                 "restart" => tauri::api::process::restart(&app.env()),
                 "hide" => {
@@ -355,7 +439,11 @@ async fn main() {
             list_customscripts,
             execute_script,
             ignore_cursor_events,
-            send_socket_message
+            send_socket_message,
+            update_config,
+            action_lists,
+            filter_keys,
+            script_lists
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -17,6 +17,8 @@
     page_state = menus.findIndex((m) => m == text); //(page_state + 1) % menus.length;
   }
   let show_menu = false;
+  let always_on_top = false;
+  $: appWindow.setAlwaysOnTop(always_on_top);
 </script>
 
 <div
@@ -54,7 +56,13 @@
     data-tauri-drag-region
     class="h-5 grow bg-base-200 rounded-lg cursor-grabbing"
   ></div>
-  <div class="btn_region flex self-end gap-2">
+  <div class="btn_region flex self-end items-center gap-2">
+    <input
+      bind:checked={always_on_top}
+      type="checkbox"
+      class="toggle toggle-xs toggle-error scale-75"
+    />
+    <div class="w-2"></div>
     <IconButton
       on:click={() => {
         appWindow.minimize();

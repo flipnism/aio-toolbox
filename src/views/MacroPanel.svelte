@@ -1,8 +1,10 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
+  import { createEventDispatcher } from "svelte";
   import IconButton from "../components/IconButton.svelte";
   import { elasticInOut, quadInOut } from "svelte/easing";
   let key_macro: any = [];
+  const dispatch = createEventDispatcher();
 
   let current_key_down = "";
   export let show_macropanel = true;
@@ -13,13 +15,19 @@
     key_macro = [];
   }
   function doSave() {
-    console.log(key_macro);
+    dispatch("save", {
+      title: current_macro_title,
+      macro: key_macro,
+    });
   }
   function doClose() {
-    show_macropanel = false;
+    current_macro_title = "Untitled";
     key_macro = [];
     current_key_down = "";
     macro_record_enable = false;
+  }
+  $: if (show_macropanel) {
+    doClose();
   }
 </script>
 
@@ -86,7 +94,7 @@
           class="btn-outline btn-circle btn-success"
         />
         <IconButton
-          on:click={doClose}
+          on:click={() => (show_macropanel = false)}
           icon="close"
           class="btn-outline btn-circle btn-error"
         />

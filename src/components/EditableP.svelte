@@ -4,7 +4,7 @@
   let edit_mode = false;
 </script>
 
-<div class="flex {$$props.class}">
+<div class="flex w-fit {$$props.class}">
   <button
     class="select-none {edit_mode ? 'hidden' : ''}"
     on:click={() => {

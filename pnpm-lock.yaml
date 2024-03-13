@@ -11,6 +11,9 @@ dependencies:
   daisyui:
     specifier: ^4.7.2
     version: 4.7.2(postcss@8.4.35)
+  sortablejs:
+    specifier: ^1.15.2
+    version: 1.15.2
 
 devDependencies:
   '@sveltejs/vite-plugin-svelte':
@@ -22,6 +25,9 @@ devDependencies:
   '@tsconfig/svelte':
     specifier: ^5.0.2
     version: 5.0.2
+  '@types/sortablejs':
+    specifier: ^1.15.8
+    version: 1.15.8
   autoprefixer:
     specifier: ^10.4.17
     version: 10.4.17(postcss@8.4.35)
@@ -609,6 +615,10 @@ packages:
 
   /@types/pug@2.0.10:
     resolution: {integrity: sha512-Sk/uYFOBAB7mb74XcpizmH0KOR2Pv3D2Hmrh1Dmy5BmK3MpdSa5kqZcg6EKBdklU0bFXX9gCfzvpnyUehrPIuA==}
+    dev: true
+
+  /@types/sortablejs@1.15.8:
+    resolution: {integrity: sha512-b79830lW+RZfwaztgs1aVPgbasJ8e7AXtZYHTELNXZPsERt4ymJdjV4OccDbHQAvHrCcFpbF78jkm0R6h/pZVg==}
     dev: true
 
   /acorn@8.11.3:
@@ -1615,6 +1625,10 @@ packages:
       minimist: 1.2.8
       sander: 0.5.1
     dev: true
+
+  /sortablejs@1.15.2:
+    resolution: {integrity: sha512-FJF5jgdfvoKn1MAKSdGs33bIqLi3LmsgVTliuX6iITj834F+JRQZN90Z93yql8h0K2t0RwDPBmxwlbZfDcxNZA==}
+    dev: false
 
   /source-map-js@1.0.2:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}
