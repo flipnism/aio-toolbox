@@ -61,9 +61,7 @@
       {#if text_content}
         <span
           on:click={() => {
-            const content = text_content.text
-              .replaceAll("'", "\\'")
-              .replaceAll('"', '\\"');
+            const content = text_content.text;
             navigator.clipboard.writeText(content).then((reason) => {
               dispatch("copy", content);
               addToast({

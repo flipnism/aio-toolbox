@@ -10,7 +10,7 @@ use strum_macros::EnumString;
    "data":"this is some data u want!"
 }
 */
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct JsonMessage {
     pub fromserver: bool,
     #[serde(rename = "type")]

@@ -45,3 +45,15 @@ export type TodoItem = {
   text: string;
   links: string[];
 };
+
+
+
+ export type AppConfig = {
+    click_throught: boolean;
+    always_on_top: boolean;
+    follow_cursor: boolean;
+    hold_delay: number;
+    reset_delay: number;
+    hide_delay: number;
+    window_position: Array<[number, number]>;
+  };

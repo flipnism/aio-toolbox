@@ -14,6 +14,7 @@ use client::{
     write_thumbnail,
 };
 use global_hotkey::GlobalHotKeyEvent;
+use lazy_static::lazy_static;
 use macropad::config::{
     read_action_lists, read_app_config, read_macropad_config, read_script_lists, write_app_config,
 };
@@ -23,7 +24,7 @@ use reqwest::{self, Url};
 use serde_json::{json, Value};
 use settings::{get_setting_for, read_hotkeys};
 use std::collections::HashMap;
-use std::fmt::{format, Alignment};
+use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::os::windows::process::CommandExt;
 use std::path::Path;
@@ -31,25 +32,33 @@ use std::process::{Command, Stdio};
 use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 use strct::{CommandArgs, JsonMessage, LoggingPayload, MacroPadDataMulti};
-use tauri::api::process::restart;
+use tauri::async_runtime::block_on;
+use tauri::SystemTray;
+use tauri::SystemTrayEvent;
+use tauri::{App, AppHandle};
+use tauri::{CustomMenuItem, Manager};
+use tauri::{SystemTrayMenu, SystemTrayMenuItem};
 use websocket::{
     Event::Connect, Event::Disconnect, Event::Message, Message as MessageText, Responder,
 };
 use window_shadows::set_shadow;
-
-use lazy_static::lazy_static;
-use std::fs::{self, File};
-use tauri::Manager;
-use tauri::SystemTray;
-use tauri::SystemTrayEvent;
-use tauri::{App, AppHandle};
-use tauri::{CustomMenuItem, SystemTrayMenu, SystemTrayMenuItem};
 lazy_static! {
     pub static ref CLIENTS: Mutex<HashMap<u64, Responder>> = Mutex::new(HashMap::new());
 }
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 
-pub static PORT: u16 = 7898; //;
+pub static PORT: u16 = 7898;
+//pub static PORT: u16 = 6969;
+
+use enigo::{Enigo, Mouse, Settings};
+#[tauri::command]
+fn mouse_location() -> (i32, i32) {
+    let enigo = Enigo::new(&Settings::default()).unwrap();
+    match Enigo::location(&enigo) {
+        Ok(x) => x,
+        Err(_) => (0, 0),
+    }
+}
 
 #[tauri::command]
 fn get_hotkey_config(
@@ -63,9 +72,16 @@ fn get_hotkey_config(
 }
 
 #[tauri::command]
-fn update_config(app: AppHandle, cloned: tauri::State<Mutex<MacropPad>>) {
-    //cloned.lock().unwrap().update_config_file(&app);
-    //restart(&app.env())
+fn update_config(app: AppHandle) {
+    let config = read_app_config(&app.path_resolver().app_data_dir().unwrap()).unwrap();
+    match app.get_window("main") {
+        Some(window) => {
+            let _ = window.set_ignore_cursor_events(config.click_throught);
+            let _ = window.set_always_on_top(config.always_on_top);
+            let _ = app.emit_all("update_config", true);
+        }
+        None => {}
+    }
 }
 
 #[tauri::command]
@@ -135,10 +151,8 @@ fn list_customscripts(app: AppHandle) -> Value {
 }
 #[tauri::command]
 async fn send_socket_message(message: JsonMessage) {
-    println!("message : {:?}", &message);
     let _ = handle_message(message).await;
 }
-
 #[tauri::command]
 fn action_lists() -> Vec<String> {
     let appdir = APP_HANDLE
@@ -223,7 +237,7 @@ async fn handle_message(msg: JsonMessage) {
                     std::io::copy(&mut response.bytes().await.unwrap().as_ref(), &mut file)
                         .unwrap();
 
-                    println!("Image downloaded successfully to: {:?}", &file_path);
+                    //println!("Image downloaded successfully to: {:?}", &file_path);
                 }
             } else {
                 println!("Failed to retrieve filename from URL");
@@ -261,9 +275,8 @@ pub fn launch_settings_window(app: &tauri::AppHandle) {
             .title("Settings!")
             .decorations(false)
             .disable_file_drop_handler()
-            .inner_size(600.0, 400.0)
+            .inner_size(1000.0, 800.0)
             .maximizable(false)
-            .skip_taskbar(true)
             .build()
             .unwrap();
 
@@ -289,14 +302,9 @@ pub fn launch_preview_window(app: &tauri::AppHandle) {
 fn setting_up_tray() -> SystemTray {
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let settings = CustomMenuItem::new("settings".to_string(), "Settings");
-    let clicktru = CustomMenuItem::new("clicktru".to_string(), "Click through");
-
     let restart = CustomMenuItem::new("restart".to_string(), "Restart");
-    let hotkeypreview = CustomMenuItem::new("hotkeypreview".to_string(), "Hotkey Preview!");
     let tray_menu = SystemTrayMenu::new()
         .add_item(settings)
-        .add_item(hotkeypreview)
-        .add_item(clicktru)
         .add_item(restart)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
@@ -307,14 +315,20 @@ fn setting_up_tray() -> SystemTray {
 async fn main() {
     let system_tray = setting_up_tray();
     let mut mpad = MacropPad::new().expect("msg");
-
     let _hotkeys_manager = &mpad.register();
     let global_hotkey_channel = GlobalHotKeyEvent::receiver();
     tauri::Builder::default()
         .setup(move |app| {
-            let ws = websocket::launch(PORT).expect("failed to launch websocket");
+            match app.get_window("main") {
+                Some(window) => {
+                    let _ = window.set_skip_taskbar(true);
+                }
+                None => {}
+            }
 
+            let ws = websocket::launch(PORT).expect("failed to launch websocket");
             APP_HANDLE.set(app.app_handle().clone()).unwrap();
+            update_config(app.app_handle());
             let _ = &mpad
                 .update_macropad_configs(app.app_handle().path_resolver().app_data_dir().unwrap());
 
@@ -359,7 +373,30 @@ async fn main() {
                     Event::ModEvent(c, pp) => {
                         let _ = APP_HANDLE.get().unwrap().emit_all(c.as_str(), pp);
                     }
+                    Event::ActionEvent(ae) => {
+                        let mut script_model = JsonMessage::default();
+                        script_model.fromserver = true;
+                        script_model.data_type = ae.action_type;
+                        script_model.data = ae.data;
+
+                        let _ = block_on(async {
+                            handle_message(script_model).await;
+                        });
+                    }
+                    Event::CustomScriptEvent(cse) => {
+                        let script_name = cse.data.replace(".json", "");
+
+                        let mut script_model = JsonMessage::default();
+                        script_model.fromserver = true;
+                        script_model.data_type = "customscript".into();
+                        script_model.data = script_name;
+
+                        let _ = block_on(async {
+                            handle_message(script_model).await;
+                        });
+                    }
                 });
+
                 loop {
                     if let Ok(event) = global_hotkey_channel.try_recv() {
                         let _ = &mpad.process_key(&event);
@@ -443,7 +480,8 @@ async fn main() {
             update_config,
             action_lists,
             filter_keys,
-            script_lists
+            script_lists,
+            mouse_location
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

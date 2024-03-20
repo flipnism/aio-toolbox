@@ -11,7 +11,15 @@
     writeTextFile,
   } from "@tauri-apps/api/fs";
   import MacroRecord from "./componentsv2/MacroRecord.svelte";
+  import { fade } from "svelte/transition";
+  /**
+   * @type {any[]}
+   */
   let items = [];
+  /**
+   * @type {any[]}
+   */
+  let stored_items = [];
   let key_items = [
     "F13",
     "F14",
@@ -26,16 +34,26 @@
     "F23",
     "F24",
   ];
+  /**
+   * @type {never[]}
+   */
   let action_lists = [];
+  /**
+   * @type {never[]}
+   */
   let script_lists = [];
+  /**
+   * @type {never[]}
+   */
   let customScripts = [];
   onMount(() => {
     invoke("list_customscripts").then((result) => {
-      customScripts = result.map((item) => item[0]);
+      customScripts = result.map((/** @type {any[]} */ item) => item[0]);
     });
     readTextFile("config.json", { dir: BaseDirectory.AppData }).then(
       (result) => {
         items = JSON.parse(result);
+        stored_items = items;
       }
     );
     invoke("script_lists").then((result) => {
@@ -52,11 +70,14 @@
     macro_id: -1,
     show: false,
   };
+  /**
+   * @param {{ Macro: any[]; } | null} data
+   */
   function macros(data) {
     return data != null && data.Macro && data.Macro.length > 0
       ? [
           ...new Set(
-            data.Macro.map((e) => {
+            data.Macro.map((/** @type {{ key: any; }} */ e) => {
               return e.key;
             })
           ),
@@ -93,6 +114,15 @@
       dir: BaseDirectory.AppData,
     });
   }
+  let filterText = "";
+  function doFilter() {
+    console.log("filter");
+    items = stored_items.filter((item) => {
+      return (
+        item.key_name.includes(filterText) || item.key_desc.includes(filterText)
+      );
+    });
+  }
 </script>
 
 <MacroRecord
@@ -104,10 +134,34 @@
   }}
 />
 
-<div class="flex flex-col h-full overflow-y-auto">
+<div
+  in:fade={{ delay: 100 }}
+  out:fade={{ duration: 100 }}
+  class="flex flex-col h-full overflow-y-auto text-[.5rem]"
+>
   <div
-    class="flex p-4 gap-5 justify-end fixed bg-base-300/50 h-fit w-full backdrop-blur-sm z-40"
+    class="flex p-4 gap-5 justify-end fixed bg-base-300/90 h-fit w-full backdrop-blur-sm z-40"
   >
+    <label
+      class="input input-ghost input-bordered input-sm flex items-center gap-5"
+    >
+      <input
+        bind:value={filterText}
+        on:input={doFilter}
+        type="text"
+        class="grow"
+      />
+      <IconButton
+        on:click={() => {
+          filterText = "";
+          doFilter();
+        }}
+        icon="delete"
+        class="btn-ghost btn-xs p-0 m-0"
+      />
+    </label>
+
+    <div class="h-2 flex-1"></div>
     <button on:click={writeConfig} class="btn btn-sm btn-neutral">
       Generate
     </button>
@@ -134,9 +188,9 @@
     />
   </div>
 
-  <table class="table mt-16 table-zebra">
+  <table class="table mt-16 table-zebra table-xs">
     <thead>
-      <tr class="bg-base-300 uppercase font-black text-lg">
+      <tr class="bg-base-300 uppercase font-black">
         <th></th>
         <th>Name</th>
         <th>Desc</th>
@@ -160,7 +214,7 @@
           <td>
             <Swap
               bind:value={item.key_mode}
-              onChange={(e) => {
+              onChange={(/** @type {string} */ e) => {
                 if (e == "Action") {
                   item.key_data = {
                     Action: {
@@ -184,7 +238,7 @@
               tabindex="-1"
               bind:checked={item.key_multikey}
               type="checkbox"
-              class="toggle toggle-sm"
+              class="toggle toggle-xs toggle-error"
             />
           </td>
           <td class="flex flex-row">
@@ -262,6 +316,9 @@
 </div>
 
 <style>
+  * {
+    font-family: "Bahnschrift";
+  }
   *::-webkit-scrollbar {
     width: 5px;
   }

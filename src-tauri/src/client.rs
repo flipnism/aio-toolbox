@@ -7,7 +7,6 @@ use std::io::{self, BufRead, BufReader, Write};
 use std::os::windows::process::CommandExt;
 use std::path::Path;
 use std::process::{Command, Stdio};
-use std::str::FromStr;
 use tauri::AppHandle;
 use tauri::Manager;
 
@@ -87,8 +86,13 @@ pub async fn convert_psd_to_png(psd_file: &str, parent_dir: &str, app_handle: &A
 }
 
 pub async fn create_emblem(new_data: &str, app_handle: &AppHandle) -> String {
-    let text = new_data;
-    let py_cmd = format!("\"import random; import bpy; mfont = bpy.data.node_groups['textNode'].nodes['fontface']; mfont.font = bpy.data.fonts.load('{}'); bpy.context.object.modifiers['textNodes']['Input_2'] = ('{text}').upper(); bpy.context.object.modifiers['textNodes']['Input_3'] = random.uniform(0.0,360.0); bpy.data.objects['text'].update_tag(); bpy.data.materials['textMat'].node_tree.nodes['textMat'].inputs['Base Color'].default_value=(1,0,0.02,1)\"",get_setting_for(ConfigEnum::EmblemFont,app_handle));
+    let py_cmd = r#""import random; import bpy; mfont = bpy.data.node_groups['textNode'].nodes['fontface']; mfont.font = bpy.data.fonts.load('"#.to_string()
+        + get_setting_for(ConfigEnum::EmblemFont, app_handle).as_str()
+        + r#"'); bpy.context.object.modifiers['textNodes']['Input_2'] = ('"#
+        + new_data.to_string().replace('"', "'").as_str()
+        + r#"').upper(); bpy.context.object.modifiers['textNodes']['Input_3'] = random.uniform(0.0,360.0); bpy.data.objects['text'].update_tag(); bpy.data.materials['textMat'].node_tree.nodes['textMat'].inputs['Base Color'].default_value=(1,0,0.02,1)""#;
+
+    println!("{}", &py_cmd);
     let template = "text-node-eevee4.blend";
     let random_string = utils::random_str(6);
     let random_frame = utils::random_frame();
@@ -111,12 +115,14 @@ pub async fn create_emblem(new_data: &str, app_handle: &AppHandle) -> String {
             &random_frame,
         ])
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .creation_flags(0x08000000)
         .spawn()
         .expect("Error reading");
     if let Some(stdout) = cmd.stdout {
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
+            println!("{:?}", &line);
             let _ = app_handle.emit_all(
                 "logger",
                 &LoggingPayload {

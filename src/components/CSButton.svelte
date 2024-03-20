@@ -11,29 +11,25 @@
     "deleteall" ||
     "delete";
   export let path = "";
-  export let tooltip_text = "";
 </script>
 
-<div
-  class={tooltip_text != "" ? "tooltip tooltip-left tooltip-warning" : ""}
-  data-tip={tooltip_text}
->
-  <button
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div class="top-0 right-0 absolute">
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <div
     tabindex="-1"
     on:mouseleave
     on:mouseover
     on:focus
     on:click
-    class="pointer-events-auto btn btn-xs {$$props.class
-      ? $$props.class
-      : 'btn-ghost btn-circle'}"
+    class="pointer-events-auto opacity-20"
   >
     {#if icon === "path"}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 20 20"
         fill="currentColor"
-        class="w-4 h-4 boop"
+        class="w-8 h-8"
       >
         <path fill-rule="evenodd" d={path} clip-rule="evenodd" />
       </svg>
@@ -96,26 +92,5 @@
         {/if}
       </svg>
     {/if}
-  </button>
+  </div>
 </div>
-
-<style>
-  @keyframes boop {
-    0% {
-      transform: scale(1);
-    }
-    50% {
-      transform: scale(0.8);
-    }
-    75% {
-      transform: scale(1.2);
-    }
-
-    100% {
-      transform: scale(1);
-    }
-  }
-  .boop:hover {
-    animation: 0.3s boop backwards running;
-  }
-</style>

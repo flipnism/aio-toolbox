@@ -36,7 +36,11 @@
 </script>
 
 <svelte:document />
-<div class="flex flex-col gap-4 overflow-y-auto p-4 h-full">
+<div
+  in:fade={{ delay: 100 }}
+  out:fade={{ duration: 100 }}
+  class="flex flex-col gap-4 overflow-y-auto p-4 h-full"
+>
   {#if show_generate_dialog}
     <div
       transition:fade={{ duration: 200, easing: cubicInOut }}

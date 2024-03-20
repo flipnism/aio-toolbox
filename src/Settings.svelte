@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { fade } from "svelte/transition";
+  import AppConfig from "./AppConfig.svelte";
   import GlobalSettings from "./GlobalSettings.svelte";
   import Hotkeys from "./Hotkeys.svelte";
   import TodoLust from "./TodoLust.svelte";
@@ -12,7 +14,7 @@
     {#if page == 0}
       <Hotkeys />
     {:else if page === 1}
-      <GlobalSettings />
+      <AppConfig />
     {:else if page === 2}
       <TodoLust />
     {/if}
@@ -20,4 +22,7 @@
 </div>
 
 <style>
+  * {
+    font-family: "Bahnschrift";
+  }
 </style>

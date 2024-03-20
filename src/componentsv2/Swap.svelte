@@ -9,6 +9,7 @@
 
 <label class="swap font-bold">
   <button
+    class="text-[.7rem]"
     tabindex="-1"
     type="checkbox"
     on:click={(e) => {
