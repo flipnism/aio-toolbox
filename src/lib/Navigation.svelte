@@ -16,7 +16,7 @@
   function handleOnClick(text: string) {
     page_state = menus.findIndex((m) => m == text); //(page_state + 1) % menus.length;
   }
-  let show_menu = false;
+  let show_menu = true;
   let always_on_top = false;
   $: appWindow.setAlwaysOnTop(always_on_top);
 </script>
@@ -27,23 +27,25 @@
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div
     on:mouseenter={() => (show_menu = true)}
-    on:mouseleave={() => (show_menu = false)}
+    on:mouseleave={() => (show_menu = true)}
     class="region_title flex"
   >
+    <!--
     <div class="font-black uppercase select-none px-2">
       {menus[page_state]}
     </div>
+    -->
     {#if show_menu}
       <div
         in:slide={{ axis: "x", duration: 300, easing: backIn }}
         out:slide={{ axis: "x", duration: 300, delay: 300, easing: backOut }}
         class="flex flex-row"
       >
-        {#each menus.filter((m) => m != menus[page_state]) as menu, i}
+        {#each menus as menu, i}
           <button
             tabindex="-1"
             on:click={() => handleOnClick(menu)}
-            class="font-black uppercase select-none btn btn-xs btn-ghost"
+            class="text-md tracking-[-.02rem] uppercase select-none btn btn-xs btn-ghost {menus[page_state]==menu?"font-black":"font-light text-base-content/20"}"
           >
             {menu}
           </button>

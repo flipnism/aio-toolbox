@@ -2,7 +2,7 @@
   import { invoke } from "@tauri-apps/api";
   import "./styles.css";
   import { listen } from "@tauri-apps/api/event";
-  import { BaseDirectory, readTextFile } from "@tauri-apps/api/fs";
+  import { BaseDirectory, readTextFile, writeTextFile } from "@tauri-apps/api/fs";
   import {  onMount } from "svelte";
   import {
     LogicalPosition,
@@ -47,34 +47,57 @@
   };
   let current_pos =0;
   $: {
+    // if (app_configs){
+    //   const p = app_configs.window_position[current_pos];
+    //   console.log(p);
+    //   appWindow.setPosition(new LogicalPosition(p[0],p[1]))
+    // }
+  }
+  let mouse_location:[number,number]=[0,0];
+    function logMousePosition(){
+    
+    invoke("mouse_location").then((result) => {
+      mouse_location = result as [number,number];
+      current_pos = (current_pos+1)%app_configs.window_position.length;
+    });
+  }
+   function setPanelPosition() {
+      current_pos = (current_pos+1)%app_configs.window_position.length;
+    
     if (app_configs){
       const p = app_configs.window_position[current_pos];
       console.log(p);
       appWindow.setPosition(new LogicalPosition(p[0],p[1]))
-  }
-  }
-  let mouse_location:[number,number]=[0,0];
-  
-   function setPanelPosition() {
-    if (!app_configs.follow_cursor) return;
-    if (mod_pressed_count <= 5) {
-      doublePressMod();
-      return;
     }
-    invoke("mouse_location").then((result) => {
-      mouse_location = result as [number,number];
-      current_pos = (current_pos+1)%app_configs.window_position.length;
-      console.log(current_pos);
-//      appWindow.setPosition(new LogicalPosition(x, y));
-      mod_pressed_count = 0;
-    });
   }
   listen("update_config", (result) => {
     loadAppConfig();
   });
-
+  
+  listen("func_event",async(result)=>{
+    switch(result.payload){
+    case "window_location":
+      setPanelPosition();
+    break;
+    case "ontop":
+    const value = app_configs.always_on_top;
+    app_configs.always_on_top = !value;  
+    app_configs = app_configs; 
+    saveAppConfig();
+    break;
+    case "clickthru":
+  
+    const val = app_configs.click_throught;
+    app_configs.click_throught= !val;  
+    app_configs = app_configs; 
+    saveAppConfig();
+  
+  break;
+    }
+  })
   listen("modkey_event", (result) => {
     dontIdle();
+    logMousePosition();
     keys = result.payload;
     if (keys.config_updated) {
       location.reload();
@@ -143,7 +166,6 @@
   }
   listen("mod_pressed", (r) => {
     mod_pressed = r.payload;
-    setPanelPosition();
     if (mod_pressed.pressed) {
       progressId = setInterval(processProgress, 5);
     } else {
@@ -162,7 +184,15 @@
       }
     }, 1000);
   }
-
+  
+  function saveAppConfig() {
+    writeTextFile("app_config.json",JSON.stringify(app_configs,null,2), { dir: BaseDirectory.AppData }).then(
+      (result) => {
+        invoke("update_config").then(result=>console.log(result))
+  
+      }
+    ).catch(e=>console.log(e));
+  }
   function loadAppConfig() {
     readTextFile("app_config.json", { dir: BaseDirectory.AppData }).then(
       (result) => {
@@ -267,6 +297,7 @@
     class="absolute top-0 left-0 pointer-events-none overflow-hidden h-full w-full z-50"
   >
       <div class="text-center text-[.7rem] font-black p-[5px]">{mouse_location}</div>
+      
     <div
       style="width:{progress * 1}px;height:{progress * 1}px;opacity:{progress /
         5 /

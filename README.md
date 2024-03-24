@@ -8,5 +8,5 @@
 - rewrite the hotkeys interface
 - map all custom scripts to its dependant layer tree
 - multiple edit hotkeys.key_1
-
+- adding some other stuff related to app config action such as, alway on top, click throught, window location, etc for further use
 ---

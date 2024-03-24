@@ -8,15 +8,23 @@
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
   import type { AppConfig } from "./global";
+    import { listen } from "@tauri-apps/api/event";
 
   let app_config: AppConfig;
-  onMount(() => {
+   function loadAppConfig(){
+    
     readTextFile("app_config.json", { dir: BaseDirectory.AppData }).then(
       (result) => {
         app_config = JSON.parse(result);
       },
     );
+  }
+   onMount(() => {
+    loadAppConfig();
   });
+  listen("update_config",(result)=>{
+    loadAppConfig();
+  })
   function saveConfig() {
     writeTextFile("app_config.json", JSON.stringify(app_config, null, 2), {
       dir: BaseDirectory.AppData,

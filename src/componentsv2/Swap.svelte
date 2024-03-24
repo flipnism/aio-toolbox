@@ -3,7 +3,7 @@
 
   export let value = "Macro";
   export let onChange;
-  let val = ["Action", "Macro", "CustomScript"];
+  let val = ["Action", "Macro", "CustomScript","AppFunction"];
   let idx = 0;
 </script>
 
@@ -13,7 +13,7 @@
     tabindex="-1"
     type="checkbox"
     on:click={(e) => {
-      idx = (idx + 1) % 3;
+      idx = (idx + 1) % 4;
       value = val[idx];
       if (onChange) onChange(value);
     }}

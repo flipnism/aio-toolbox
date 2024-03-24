@@ -12,6 +12,7 @@
   } from "@tauri-apps/api/fs";
   import MacroRecord from "./componentsv2/MacroRecord.svelte";
   import { fade } from "svelte/transition";
+    import { MultiDrag } from "sortablejs";
   /**
    * @type {any[]}
    */
@@ -46,6 +47,8 @@
    * @type {never[]}
    */
   let customScripts = [];
+
+  let appfunction_lists = [];
   onMount(() => {
     invoke("list_customscripts").then((result) => {
       customScripts = result.map((/** @type {any[]} */ item) => item[0]);
@@ -54,8 +57,19 @@
       (result) => {
         items = JSON.parse(result);
         stored_items = items;
-      }
+      },
     );
+
+    readTextFile("appfunction_list.json", { dir: BaseDirectory.AppData })
+      .then((result) => {
+        appfunction_lists = JSON.parse(result);
+      })
+      .catch((e) => {
+        writeTextFile("appfunction_list.json", JSON.stringify([]), {
+          dir: BaseDirectory.AppData,
+        });
+      });
+
     invoke("script_lists").then((result) => {
       script_lists = result;
     });
@@ -79,7 +93,7 @@
           ...new Set(
             data.Macro.map((/** @type {{ key: any; }} */ e) => {
               return e.key;
-            })
+            }),
           ),
         ]
           .join(" ")
@@ -114,13 +128,20 @@
       dir: BaseDirectory.AppData,
     });
   }
+  $:console.log(multikey_filter_only);
+  let multikey_filter_only = false;
   let filterText = "";
   function doFilter() {
     console.log("filter");
     items = stored_items.filter((item) => {
-      return (
-        item.key_name.includes(filterText) || item.key_desc.includes(filterText)
-      );
+      if (multikey_filter_only) {
+        return item.key_1.includes(filterText);
+      } else {
+        return (
+          item.key_name.includes(filterText) ||
+          item.key_desc.includes(filterText)
+        );
+      }
     });
   }
 </script>
@@ -143,7 +164,7 @@
     class="flex p-4 gap-5 justify-end fixed bg-base-300/90 h-fit w-full backdrop-blur-sm z-40"
   >
     <label
-      class="input input-ghost input-bordered input-sm flex items-center gap-5"
+      class="input input-ghost input-bordered input-sm flex items-center gap-2"
     >
       <input
         bind:value={filterText}
@@ -151,13 +172,18 @@
         type="text"
         class="grow"
       />
+      <input
+        bind:checked={multikey_filter_only}
+        type="checkbox"
+        class="checkbox checkbox-xs"
+      />
       <IconButton
         on:click={() => {
           filterText = "";
           doFilter();
         }}
         icon="delete"
-        class="btn-ghost btn-xs p-0 m-0"
+        class="btn-xs btn-ghost"
       />
     </label>
 
@@ -286,7 +312,7 @@
               >
                 {macros(item.key_data)}
               </button>
-            {:else}
+            {:else if item.key_mode == "CustomScript"}
               <Dropdown
                 selected={item.key_data
                   ? item.key_data.CustomScript.data
@@ -297,6 +323,16 @@
                     CustomScript: { data: e.detail },
                   };
                 }}
+              />
+            {:else}
+              <Dropdown
+                selected={item.key_data?item.key_data.AppFunction:"None"}
+                items={appfunction_lists}
+                on:selected={(e) => {
+                item.key_data = {
+                  AppFunction:e.detail
+              }
+              }}
               />
             {/if}
           </td>

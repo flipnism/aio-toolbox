@@ -9,10 +9,7 @@ mod websocket;
 use crate::strct::ConfigEnum;
 use crate::websocket::Message as Msg;
 use arboard::Clipboard;
-use client::{
-    add_thumbnail, convert_psd_to_png, create_emblem, delete_thumbnail, send_image_to_whatsapp,
-    write_thumbnail,
-};
+use client::{add_thumbnail, create_emblem, delete_thumbnail, send_image_to_whatsapp};
 use global_hotkey::GlobalHotKeyEvent;
 use lazy_static::lazy_static;
 use macropad::config::{
@@ -30,12 +27,13 @@ use std::os::windows::process::CommandExt;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::{Mutex, OnceLock};
+use std::thread::sleep;
 use std::time::Duration;
 use strct::{CommandArgs, JsonMessage, LoggingPayload, MacroPadDataMulti};
 use tauri::async_runtime::block_on;
+use tauri::AppHandle;
 use tauri::SystemTray;
 use tauri::SystemTrayEvent;
-use tauri::{App, AppHandle};
 use tauri::{CustomMenuItem, Manager};
 use tauri::{SystemTrayMenu, SystemTrayMenuItem};
 use websocket::{
@@ -279,7 +277,12 @@ pub fn launch_settings_window(app: &tauri::AppHandle) {
             .maximizable(false)
             .build()
             .unwrap();
-
+            window.on_window_event(|event| match event {
+                tauri::WindowEvent::Resized(..) => {
+                    sleep(Duration::from_millis(1));
+                }
+                _ => {}
+            });
             set_shadow(&window, true).unwrap();
         }
     }
@@ -322,10 +325,19 @@ async fn main() {
             match app.get_window("main") {
                 Some(window) => {
                     let _ = window.set_skip_taskbar(true);
+
+                    window.on_window_event(|event| match event {
+                        tauri::WindowEvent::Resized(..) => {
+                            sleep(Duration::from_millis(1));
+                        }
+                        tauri::WindowEvent::Moved(..) => {
+                            sleep(Duration::from_millis(1));
+                        }
+                        _ => {}
+                    });
                 }
                 None => {}
             }
-
             let ws = websocket::launch(PORT).expect("failed to launch websocket");
             APP_HANDLE.set(app.app_handle().clone()).unwrap();
             update_config(app.app_handle());
@@ -395,6 +407,9 @@ async fn main() {
                             handle_message(script_model).await;
                         });
                     }
+                    Event::AppFunctionEvent(func) => {
+                        let _ = APP_HANDLE.get().unwrap().emit_all("func_event", func);
+                    }
                 });
 
                 loop {
@@ -452,7 +467,7 @@ async fn main() {
                             }
                         }
                         Err(_) => {
-                            println!("error");
+                            println!("error error");
                         }
                     }
                 }

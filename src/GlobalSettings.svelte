@@ -11,7 +11,7 @@
   import type { GlobalSetting } from "./global";
   import IconButton from "./components/IconButton.svelte";
   import SettingDialog from "./views/SettingDialog.svelte";
-  import { emit } from "@tauri-apps/api/event";
+  import { emit, listen } from "@tauri-apps/api/event";
   import InputBoolean from "./components/InputBoolean.svelte";
 
   const config_file = "users/settings.json";
@@ -25,6 +25,10 @@
       setting_datas = JSON.parse(result);
     });
   }
+  
+  listen("update_config", (result) => {
+      parseSettingFile();  
+  });
   onMount(() => {
     exists(config_file, { dir: BaseDirectory.AppData }).then((exist) => {
       if (!exist) writeSettingFile([]);
