@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "aio-websockets-server-v2",
-    "version": "0.0.5"
+    "version": "0.0.6"
   },
   "tauri": {
     "systemTray": {
@@ -26,7 +26,11 @@
         "removeDir": false,
         "removeFile": false,
         "renameFile": false,
-        "scope": ["$APPDATA/**/*","$APPDATA/*","**"],
+        "scope": [
+          "$APPDATA/**/*",
+          "$APPDATA/*",
+          "**"
+        ],
         "writeFile": true
       },
       "path": {
@@ -43,6 +47,7 @@
         "hide": true,
         "show": true,
         "setSize": true,
+        "setFocus": true,
         "minimize": true,
         "setMinimizable": true,
         "setSkipTaskbar": false,

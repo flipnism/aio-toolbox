@@ -2,15 +2,19 @@
   import { invoke } from "@tauri-apps/api";
   import "./styles.css";
   import { listen } from "@tauri-apps/api/event";
-  import { BaseDirectory, readTextFile, writeTextFile } from "@tauri-apps/api/fs";
-  import {  onMount } from "svelte";
+  import {
+    BaseDirectory,
+    readTextFile,
+    writeTextFile,
+  } from "@tauri-apps/api/fs";
+  import { onMount } from "svelte";
   import {
     LogicalPosition,
     LogicalSize,
     appWindow,
   } from "@tauri-apps/api/window";
   import CustomScriptButton from "./componentsv2/CustomScriptButton.svelte";
-  
+
   import type { AppConfig } from "./global";
   let keys: any = null;
   let mod_pressed = { pressed: false, milisecond: 0 };
@@ -21,14 +25,17 @@
   let opacity = 1;
   let progress = 0;
   let customScripts = [];
-  let app_configs:AppConfig;
+  let app_configs: AppConfig;
   let mod_pressed_count = 0;
-  
+
   const doIdle = () => {
     opacity = 0;
     clearTimeout(delayIdle);
   };
   const dontIdle = () => {
+    appWindow.isFocused().then((result) => {
+      if (!result) appWindow.setFocus();
+    });
     opacity = 1;
     clearTimeout(delayIdle);
     counter = app_configs.hide_delay / 1000;
@@ -45,7 +52,7 @@
     }, 200);
     mod_pressed_count += 1;
   };
-  let current_pos =0;
+  let current_pos = 0;
   $: {
     // if (app_configs){
     //   const p = app_configs.window_position[current_pos];
@@ -53,48 +60,46 @@
     //   appWindow.setPosition(new LogicalPosition(p[0],p[1]))
     // }
   }
-  let mouse_location:[number,number]=[0,0];
-    function logMousePosition(){
-    
+  let mouse_location: [number, number] = [0, 0];
+  function logMousePosition() {
     invoke("mouse_location").then((result) => {
-      mouse_location = result as [number,number];
-      current_pos = (current_pos+1)%app_configs.window_position.length;
+      mouse_location = result as [number, number];
+      current_pos = (current_pos + 1) % app_configs.window_position.length;
     });
   }
-   function setPanelPosition() {
-      current_pos = (current_pos+1)%app_configs.window_position.length;
-    
-    if (app_configs){
+  function setPanelPosition() {
+    current_pos = (current_pos + 1) % app_configs.window_position.length;
+
+    if (app_configs) {
       const p = app_configs.window_position[current_pos];
       console.log(p);
-      appWindow.setPosition(new LogicalPosition(p[0],p[1]))
+      appWindow.setPosition(new LogicalPosition(p[0], p[1]));
     }
   }
   listen("update_config", (result) => {
     loadAppConfig();
   });
-  
-  listen("func_event",async(result)=>{
-    switch(result.payload){
-    case "window_location":
-      setPanelPosition();
-    break;
-    case "ontop":
-    const value = app_configs.always_on_top;
-    app_configs.always_on_top = !value;  
-    app_configs = app_configs; 
-    saveAppConfig();
-    break;
-    case "clickthru":
-  
-    const val = app_configs.click_throught;
-    app_configs.click_throught= !val;  
-    app_configs = app_configs; 
-    saveAppConfig();
-  
-  break;
+
+  listen("func_event", async (result) => {
+    switch (result.payload) {
+      case "window_location":
+        setPanelPosition();
+        break;
+      case "ontop":
+        const value = app_configs.always_on_top;
+        app_configs.always_on_top = !value;
+        app_configs = app_configs;
+        saveAppConfig();
+        break;
+      case "clickthru":
+        const val = app_configs.click_throught;
+        app_configs.click_throught = !val;
+        app_configs = app_configs;
+        saveAppConfig();
+
+        break;
     }
-  })
+  });
   listen("modkey_event", (result) => {
     dontIdle();
     logMousePosition();
@@ -108,6 +113,7 @@
       doFilter(configs);
       return;
     }
+
     if (!keys.multikey && !keys.mod_pressed) {
       doFilter(configs);
       return;
@@ -184,23 +190,24 @@
       }
     }, 1000);
   }
-  
+
   function saveAppConfig() {
-    writeTextFile("app_config.json",JSON.stringify(app_configs,null,2), { dir: BaseDirectory.AppData }).then(
-      (result) => {
-        invoke("update_config").then(result=>console.log(result))
-  
-      }
-    ).catch(e=>console.log(e));
+    writeTextFile("app_config.json", JSON.stringify(app_configs, null, 2), {
+      dir: BaseDirectory.AppData,
+    })
+      .then((result) => {
+        invoke("update_config").then((result) => console.log(result));
+      })
+      .catch((e) => console.log(e));
   }
   function loadAppConfig() {
     readTextFile("app_config.json", { dir: BaseDirectory.AppData }).then(
       (result) => {
         app_configs = JSON.parse(result);
         counter = app_configs.hide_delay / 1000;
-  
+
         doCountDown();
-      }
+      },
     );
   }
 
@@ -220,7 +227,7 @@
           key_2: "",
         };
         doFilter(configs);
-      }
+      },
     );
     appWindow.setSize(new LogicalSize(400, 150));
   });
@@ -292,123 +299,125 @@
 <!-- svelte-ignore avoid-mouse-events-on-document -->
 <svelte:document on:mouseenter={dontIdle} />
 {#if app_configs}
-<div style="opacity: {opacity};" class="transition-all bg-base-300/90">
-  <div
-    class="absolute top-0 left-0 pointer-events-none overflow-hidden h-full w-full z-50"
-  >
-      <div class="text-center text-[.7rem] font-black p-[5px]">{mouse_location}</div>
-      
+  <div style="opacity: {opacity};" class="transition-all bg-base-300/90">
     <div
-      style="width:{progress * 1}px;height:{progress * 1}px;opacity:{progress /
-        5 /
-        100};"
-      class="{progress >= app_configs.hold_delay
-        ? progress >= app_configs.reset_delay
-          ? 'bg-error transition-all'
-          : 'bg-success'
-        : 'bg-white'}  w-10 h-10 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 relative"
-    ></div>
-  </div>
-
-  <div class="flex overflow-hidden flex-col select-none h-screen w-screen">
-    <div class="flex items-center">
-      <div class="text-[.7rem] font-black p-[5px]">{counter}</div>
-      {#if keys}
-        {#if keys.mod_pressed}
-          <div class="text-[.7rem] font-black p-[5px]">
-            {key(keys)}
-          </div>
-        {:else}
-          <div class="text-[.7rem] p-[5px] font-black">
-            Key: {keys.key_1 || "_"}
-          </div>
-        {/if}
-      {/if}
-      <div
-        data-tauri-drag-region
-        class="h-4/6 flex-1 cursor-grabbing hover:bg-base-100/20 active:bg-base-100/20 rounded-lg"
-      ></div>
-      <div
-        class="font-light text-base-content/50 line-clamp-1 px-2 text-[.6rem]"
-      >
-        {current_desc}
+      class="absolute top-0 left-0 pointer-events-none overflow-hidden h-full w-full z-50"
+    >
+      <div class="text-center text-[.7rem] font-black p-[5px]">
+        {mouse_location}
       </div>
+
+      <div
+        style="width:{progress * 1}px;height:{progress *
+          1}px;opacity:{progress / 5 / 100};"
+        class="{progress >= app_configs.hold_delay
+          ? progress >= app_configs.reset_delay
+            ? 'bg-error transition-all'
+            : 'bg-success'
+          : 'bg-white'}  w-10 h-10 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 relative"
+      ></div>
     </div>
 
-    {#if filtered_config && filtered_config.filter((e) => e != null).length > 0}
-      {#key filtered_config}
-        <div class="grid grid-cols-4 overflow-hidden">
-          {#each filtered_config as key, i}
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
-
-            <div
-              on:mouseenter={() => {
-                if (key) current_desc = key.key_desc;
-              }}
-              on:mouseleave={() => {
-                current_desc = "";
-              }}
-              class="border min-h-10 {key != null && key.key_multikey
-                ? 'bg-success/5 border-white/5'
-                : whichkey(pads[i])
-                  ? 'border-warning border-2'
-                  : 'border-white/5'} text-xs p-1"
-            >
-              {#if key}
-                {#if key.key_mode == "CustomScript"}
-                  <CustomScriptButton
-                    key={pads[i]}
-                    obj={findIcon(key.key_data.CustomScript.data)}
-                  />
-                {:else}
-                  <div
-                    class="flex w-full text-[.7rem] uppercase {key.key_mode !=
-                    ''
-                      ? ''
-                      : 'bg-success/20'}"
-                  >
-                    <div
-                      class="font-black {key.key_mode != ''
-                        ? ''
-                        : 'text-xl text-center self-center w-full'}"
-                    >
-                      {key.key_name}
-                    </div>
-                    <div class="font-extralight text-base-content/50"></div>
-                    <div class="flex-1"></div>
-                    {#if key.key_mode != ""}
-                      <div
-                        class="font-black italic {key.key_mode == 'Action'
-                          ? 'bg-success'
-                          : 'bg-error'} rounded-full w-4 h-4 text-center text-base-300"
-                      >
-                        {key.key_mode.slice(0, 1)}
-                      </div>
-                    {/if}
-                  </div>
-                  <div class="font-light line-clamp-1 text-[.5rem]">
-                    {key.key_mode != "" ? pads[i] : ""}
-                  </div>
-                {/if}
-              {/if}
+    <div class="flex overflow-hidden flex-col select-none h-screen w-screen">
+      <div class="flex items-center">
+        <div class="text-[.7rem] font-black p-[5px]">{counter}</div>
+        {#if keys}
+          {#if keys.mod_pressed}
+            <div class="text-[.7rem] font-black p-[5px]">
+              {key(keys)}
             </div>
-          {/each}
+          {:else}
+            <div class="text-[.7rem] p-[5px] font-black">
+              Key: {keys.key_1 || "_"}
+            </div>
+          {/if}
+        {/if}
+        <div
+          data-tauri-drag-region
+          class="h-4/6 flex-1 cursor-grabbing hover:bg-base-100/20 active:bg-base-100/20 rounded-lg"
+        ></div>
+        <div
+          class="font-light text-base-content/50 line-clamp-1 px-2 text-[.6rem]"
+        >
+          {current_desc}
         </div>
-      {/key}
-    {:else}
-      <!-- svelte-ignore a11y-no-static-element-interactions -->
-      <div
-        on:mouseenter={() => {
-          current_desc = "";
-        }}
-        class="flex text-center h-screen w-screen justify-center items-center text-4xl text-white/10 absolute"
-      >
-        None
       </div>
-    {/if}
+
+      {#if filtered_config && filtered_config.filter((e) => e != null).length > 0}
+        {#key filtered_config}
+          <div class="grid grid-cols-4 overflow-hidden">
+            {#each filtered_config as key, i}
+              <!-- svelte-ignore a11y-no-static-element-interactions -->
+
+              <div
+                on:mouseenter={() => {
+                  if (key) current_desc = key.key_desc;
+                }}
+                on:mouseleave={() => {
+                  current_desc = "";
+                }}
+                class="border min-h-10 {key != null && key.key_multikey
+                  ? 'bg-success/5 border-white/5'
+                  : whichkey(pads[i])
+                    ? 'border-warning border-2'
+                    : 'border-white/5'} text-xs p-1"
+              >
+                {#if key}
+                  {#if key.key_mode == "CustomScript"}
+                    <CustomScriptButton
+                      key={pads[i]}
+                      obj={findIcon(key.key_data.CustomScript.data)}
+                    />
+                  {:else}
+                    <div
+                      class="flex w-full text-[.7rem] uppercase {key.key_mode !=
+                      ''
+                        ? ''
+                        : 'bg-success/20'}"
+                    >
+                      <div
+                        class="font-black {key.key_mode != ''
+                          ? ''
+                          : 'text-xl text-center self-center w-full'}"
+                      >
+                        {key.key_name}
+                      </div>
+                      <div class="font-extralight text-base-content/50"></div>
+                      <div class="flex-1"></div>
+                      {#if key.key_mode != ""}
+                        <div
+                          class="font-black italic {key.key_mode == 'Action'
+                            ? 'bg-success'
+                            : 'bg-error'} rounded-full w-4 h-4 text-center text-base-300"
+                        >
+                          {key.key_mode.slice(0, 1)}
+                        </div>
+                      {/if}
+                    </div>
+                    <div class="font-light line-clamp-1 text-[.5rem]">
+                      {key.key_mode != "" ? pads[i] : ""}
+                    </div>
+                  {/if}
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/key}
+      {:else}
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div
+          on:mouseenter={() => {
+            current_desc = "";
+          }}
+          class="flex text-center h-screen w-screen justify-center items-center text-4xl text-white/10 absolute"
+        >
+          None
+        </div>
+      {/if}
+    </div>
   </div>
-</div>
 {/if}
+
 <style>
   :global(html),
   :global(:root) {
