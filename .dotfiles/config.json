@@ -1,0 +1,567 @@
+[
+  {
+    "key_name": "left",
+    "key_desc": "align left all selected text",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F13",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "LEFT"
+      }
+    }
+  },
+  {
+    "key_name": "mid",
+    "key_desc": "align mid all selected text",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F14",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "MID"
+      }
+    }
+  },
+  {
+    "key_name": "right",
+    "key_desc": "align right all selected text",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F15",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "RIGHT"
+      }
+    }
+  },
+  {
+    "key_name": "scale",
+    "key_desc": "scale selected layer to canvas",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F16",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "SCALE"
+      }
+    }
+  },
+  {
+    "key_name": "midleft",
+    "key_desc": "align text to left of canvas",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F17",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "topleft"
+      }
+    }
+  },
+  {
+    "key_name": "midcenter",
+    "key_desc": "align text to center of canvas",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F18",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "toptop"
+      }
+    }
+  },
+  {
+    "key_name": "midright",
+    "key_desc": "align text to right of canvas",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F19",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "topright"
+      }
+    }
+  },
+  {
+    "key_name": "margin",
+    "key_desc": "toggle margin on or off",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F20",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "SWITCHMARGIN"
+      }
+    }
+  },
+  {
+    "key_name": "botleft",
+    "key_desc": "align text to left of canvas bottom",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F21",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "botleft"
+      }
+    }
+  },
+  {
+    "key_name": "botcenter",
+    "key_desc": "align text to center of canvas bottom",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F22",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "botbot"
+      }
+    }
+  },
+  {
+    "key_name": "botright",
+    "key_desc": "align text to right of canvas bottom",
+    "key_mode": "Action",
+    "key_multikey": false,
+    "key_1": "F23",
+    "key_2": "",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "botright"
+      }
+    }
+  },
+  {
+    "key_name": "save",
+    "key_desc": "save thumbnail",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F13",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "save"
+      }
+    }
+  },
+  {
+    "key_name": "newdoc",
+    "key_desc": "new document",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F14",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "newdoc"
+      }
+    }
+  },
+  {
+    "key_name": "curve",
+    "key_desc": "adjust curve",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F15",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "adj_curves"
+      }
+    }
+  },
+  {
+    "key_name": "scaleup",
+    "key_desc": "scale up by 1.28",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F16",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "SCALEUP"
+      }
+    }
+  },
+  {
+    "key_name": "huesat",
+    "key_desc": "adjust hue and saturation",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F17",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "adj_huesaturation"
+      }
+    }
+  },
+  {
+    "key_name": "colblnce",
+    "key_desc": "color balance",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F18",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "adj_colorbalance"
+      }
+    }
+  },
+  {
+    "key_name": "exposure",
+    "key_desc": "adjust exposure",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F19",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "adj_exposure"
+      }
+    }
+  },
+  {
+    "key_name": "scaledown",
+    "key_desc": "scale down by 1.28",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F20",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "SCALEDOWN"
+      }
+    }
+  },
+  {
+    "key_name": "gradiant",
+    "key_desc": "adjust gradient map",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F21",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "adj_gradientmap"
+      }
+    }
+  },
+  {
+    "key_name": "lut",
+    "key_desc": "adjust lut",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F22",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "adj_lut"
+      }
+    }
+  },
+  {
+    "key_name": "contentawarefill",
+    "key_desc": "content aware fill",
+    "key_mode": "Action",
+    "key_multikey": true,
+    "key_1": "F21",
+    "key_2": "F23",
+    "key_data": {
+      "Action": {
+        "fromserver": false,
+        "type": "hotkey",
+        "data": "deleteandfill"
+      }
+    }
+  },
+  {
+    "key_name": "copy layer",
+    "key_desc": "copy all layer and paste to a new layer in photoshop",
+    "key_mode": "Macro",
+    "key_multikey": true,
+    "key_1": "F22",
+    "key_2": "F13",
+    "key_data": {
+      "Macro": [
+        {
+          "key": "Control",
+          "key_down": true
+        },
+        {
+          "key": "a",
+          "key_down": true
+        },
+        {
+          "key": "a",
+          "key_down": false
+        },
+        {
+          "key": "c",
+          "key_down": true
+        },
+        {
+          "key": "c",
+          "key_down": false
+        },
+        {
+          "key": "v",
+          "key_down": true
+        },
+        {
+          "key": "v",
+          "key_down": false
+        },
+        {
+          "key": "Control",
+          "key_down": false
+        }
+      ]
+    }
+  },
+  {
+    "key_name": "Photoshop",
+    "key_desc": "bring photoshop window to front",
+    "key_mode": "Macro",
+    "key_multikey": true,
+    "key_1": "F22",
+    "key_2": "F14",
+    "key_data": {
+      "Macro": [
+        {
+          "key": "Meta",
+          "key_down": true
+        },
+        {
+          "key": "1",
+          "key_down": true
+        },
+        {
+          "key": "1",
+          "key_down": false
+        },
+        {
+          "key": "Meta",
+          "key_down": false
+        }
+      ]
+    }
+  },
+  {
+    "key_name": "cntntfill",
+    "key_desc": "content aware fill",
+    "key_mode": "CustomScript",
+    "key_multikey": true,
+    "key_1": "F23",
+    "key_2": "F13",
+    "key_data": {
+      "CustomScript": {
+        "data": "contentawarefill.json"
+      }
+    }
+  },
+  {
+    "key_name": "fixmask",
+    "key_desc": "trim mask bleed",
+    "key_mode": "CustomScript",
+    "key_multikey": true,
+    "key_1": "F23",
+    "key_2": "F14",
+    "key_data": {
+      "CustomScript": {
+        "data": "fixmask.json"
+      }
+    }
+  },
+  {
+    "key_name": "blur",
+    "key_desc": "gaussian blue",
+    "key_mode": "CustomScript",
+    "key_multikey": true,
+    "key_1": "F23",
+    "key_2": "F15",
+    "key_data": {
+      "CustomScript": {
+        "data": "gaussianblur.json"
+      }
+    }
+  },
+  {
+    "key_name": "jointext",
+    "key_desc": "join text",
+    "key_mode": "CustomScript",
+    "key_multikey": true,
+    "key_1": "F23",
+    "key_2": "F16",
+    "key_data": {
+      "CustomScript": {
+        "data": "jointext.json"
+      }
+    }
+  },
+  {
+    "key_name": "redbox",
+    "key_desc": "red box",
+    "key_mode": "CustomScript",
+    "key_multikey": true,
+    "key_1": "F23",
+    "key_2": "F17",
+    "key_data": {
+      "CustomScript": {
+        "data": "redbox.json"
+      }
+    }
+  },
+  {
+    "key_name": "resizelayer",
+    "key_desc": "resize layer",
+    "key_mode": "CustomScript",
+    "key_multikey": true,
+    "key_1": "F23",
+    "key_2": "F18",
+    "key_data": {
+      "CustomScript": {
+        "data": "resizelayer.json"
+      }
+    }
+  },
+  {
+    "key_name": "select",
+    "key_desc": "select object",
+    "key_mode": "CustomScript",
+    "key_multikey": true,
+    "key_1": "F23",
+    "key_2": "F19",
+    "key_data": {
+      "CustomScript": {
+        "data": "selectionmask.json"
+      }
+    }
+  },
+  {
+    "key_name": "selectool",
+    "key_desc": "select tool",
+    "key_mode": "CustomScript",
+    "key_multikey": true,
+    "key_1": "F23",
+    "key_2": "F20",
+    "key_data": {
+      "CustomScript": {
+        "data": "selectiontool.json"
+      }
+    }
+  },
+  {
+    "key_name": "select subject",
+    "key_desc": "select subject",
+    "key_mode": "CustomScript",
+    "key_multikey": true,
+    "key_1": "F23",
+    "key_2": "F21",
+    "key_data": {
+      "CustomScript": {
+        "data": "selectsubject.json"
+      }
+    }
+  },
+  {
+    "key_name": "split",
+    "key_desc": "split text",
+    "key_mode": "CustomScript",
+    "key_multikey": true,
+    "key_1": "F23",
+    "key_2": "F22",
+    "key_data": {
+      "CustomScript": {
+        "data": "splittext.json"
+      }
+    }
+  },
+  {
+    "key_name": "location",
+    "key_desc": "location of the macropad toolbar",
+    "key_mode": "AppFunction",
+    "key_multikey": true,
+    "key_1": "F22",
+    "key_2": "F15",
+    "key_data": {
+      "AppFunction": "window_location"
+    }
+  },
+  {
+    "key_name": "ontop",
+    "key_desc": "always on top switch",
+    "key_mode": "AppFunction",
+    "key_multikey": true,
+    "key_1": "F22",
+    "key_2": "F16",
+    "key_data": {
+      "AppFunction": "ontop"
+    }
+  },
+  {
+    "key_name": "clicktru",
+    "key_desc": "click throught",
+    "key_mode": "AppFunction",
+    "key_multikey": true,
+    "key_1": "F22",
+    "key_2": "F17",
+    "key_data": {
+      "AppFunction": "clickthru"
+    }
+  }
+]

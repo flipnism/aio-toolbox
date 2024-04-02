@@ -1,0 +1,22 @@
+{
+  "click_throught": true,
+  "always_on_top": true,
+  "follow_cursor": false,
+  "hold_delay": 300,
+  "reset_delay": 3000,
+  "hide_delay": 30000,
+  "window_position": [
+    [
+      106,
+      58
+    ],
+    [
+      120,
+      1200
+    ],
+    [
+      1400,
+      1200
+    ]
+  ]
+}

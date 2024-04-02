@@ -9,3 +9,7 @@
 - ~~adding some other stuff related to app config action such as, alway on top, click throught, window location, etc for further use~~
 
 ---
+
+
+.dotfiles directory
+~/AppData/Roaming/dcsms.aioserver.v2
